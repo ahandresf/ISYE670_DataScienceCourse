@@ -1,0 +1,77 @@
+---
+title: "Module 3 In Class Activity"
+output:
+  pdf_document: default
+---
+
+**Author:** Andres Felipe Alba Hernández 
+**Department:** Electrical Engineering
+**Date:** September 13, 2018  
+**Course:** ISYE670 Data Science for Engineers
+**Professor**
+**Northern Illinois University**
+
+#PART A
+
+1) Load the islands dataset and obtain the total number of observations.
+
+```{r}
+rm(list=ls()) 
+data("islands") #load the dataset islands
+#help("islands")
+summary(islands)
+``` 
+
+**Description:**
+The areas in thousands of square miles of the landmasses which exceed 10,000 square miles.  
+**Usage:**
+islands
+**Answer: The total number of observation is:**
+
+2) Calculation of mean and media:
+```{R}
+mean(islands)
+median(islands)
+```
+
+3) Using range calculate max and min value size of the islands:
+it will be display as min max in the output of the following command.
+```{R}
+range(islands)
+```
+
+4) Standard desviation and Range.
+
+```{R}
+sd(islands) #standard desviation
+range(islands) #range output = (min,max)
+```
+5) Quantile Function:  
+a) Find the quantiles for: 0%, 25%, 50%, 75%, 100%
+```{R}
+quantile(islands)
+```
+b) Find the quantiles for: .05%, 95%
+```{R}
+quantile(islands,probs = c(0.005,0.95))
+```
+c) What does the parameter na.rm do?
+
+```{R}
+data_test <- c(0.5,10,NaN)
+quantile(data_test,na.rm = TRUE)
+try(quantile(data_test)) #How can
+try(quantile(data_test,na.rm = FALSE))
+```
+If the na.rm flag is set as FALSE the NaN values are not removed before the computation, therefore they are not allow to be in the data set. As may be observed above.
+
+6) Interqueartile range: As can be observed in the calculation below it correspond to the different between the 75% quartile and the 25% queartile. 
+
+```{R}
+quantile(islands)
+calculate_IQR <- (183.25-20.5)
+print(calculate_IQR)
+IQR(islands)
+#IQR(data_test,na.rm = TRUE)
+```
+
