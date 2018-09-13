@@ -1,0 +1,195 @@
+---
+title: "ICA_1 AndresAlba"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+<b>Chair Orders Excersice</b>
+#1 
+#1.a
+orderNum <- c(1:5)
+numUnits <- c(5,7,3,4,6)
+color <- c("brown", "red", "red", "blue", "red")
+done <- c(TRUE, TRUE, FALSE, FALSE, FALSE)
+#1.b
+ChairOrders <- data.frame(orderNum, numUnits, color, done)
+#1.c
+```
+This remove the datastructures but it keep the Chair Orders
+```
+out_rm <- rm(orderNum, numUnits, color, done)
+#1.d
+names(ChairOrders)
+```
+the name of the first columb is orderNum
+[1] "orderNum" "numUnits" "color"    "done" 
+```
+#1.e
+print(ChairOrders)
+```
+> print(ChairOrders)
+  orderNum numUnits color  done
+1        1        5 brown  TRUE
+2        2        7   red  TRUE
+3        3        3   red FALSE
+4        4        4  blue FALSE
+5        5        6   red FALSE
+```
+#the same frame with modify names
+ChairOrders_modif_names <- data.frame(ordenes=orderNum, unidades=numUnits, colores=color, realizado=done)
+
+#2
+mean_2a <- mean(ChairOrders)
+mean_2b <- mean(ChairOrders$numUnits)
+```
+> mean_2a
+[1] NA
+> mean_2b
+[1] 5
+```
+
+#3
+#3.a
+sum_numUnits <- sum(ChairOrders$numUnits)
+```
+> sum_numUnits
+[1] 25
+```
+#3.b
+print(ChairOrders$numUnits)
+```
+Output:
+#   > print(ChairOrders$numUnits)
+#   [1] 5 7 3 4 6
+```
+#3.c
+ChairOrders$numUnits[2]
+```
+Output:
+#   [1] 7
+```
+#3.d
+vector_red=ChairOrders$color=="red"
+```
+Output:
+#   [1] FALSE  TRUE  TRUE FALSE  TRUE
+```
+vector_done=ChairOrders$done=="FALSE"
+```
+Output:
+#   [1] FALSE FALSE  TRUE  TRUE  TRUE
+```
+#3.e
+chairs_notDone <- sum(ChairOrders$numUnits[ChairOrders$done==FALSE])
+```
+Output:
+#   > chairs_notDone
+#   [1] 13
+```
+#3.f
+chairs_Done <- sum(ChairOrders$numUnits[ChairOrders$done==TRUE])
+```
+Output:
+#   [1] 12
+```
+#3.g
+chairs_Red <- sum(ChairOrders$numUnits[ChairOrders$color=="red"])
+chairs_Brown <- sum(ChairOrders$numUnits[ChairOrders$color=="brown"])
+```
+Output:
+  > chairs_Brown
+  [1] 5
+  > chairs_Red
+  [1] 16
+```
+
+#4.a
+chair_red_notDone <- sum(ChairOrders$numUnits[ChairOrders$color=="red"])
+```
+Output:
+  > chair_notred_notDone
+  [1] 4
+```
+#4.b
+chair_notRed_notDone <- sum(ChairOrders$numUnits[ChairOrders$color!="red" & ChairOrders$done==FALSE])
+```
+Output:
+  > chair_notred_notDone
+  [1] 4
+```
+
+#5
+summary(ChairOrders)
+```
+> summary(ChairOrders)
+    orderNum    numUnits   color      done        
+ Min.   :1   Min.   :3   blue :1   Mode :logical  
+ 1st Qu.:2   1st Qu.:4   brown:1   FALSE:3        
+ Median :3   Median :5   red  :3   TRUE :2        
+ Mean   :3   Mean   :5             NA's :0        
+ 3rd Qu.:4   3rd Qu.:6                            
+ Max.   :5   Max.   :7 
+
+#The command will show the min, the first quartile, median, mean, third quartile and maximum for each column vector
+#each vector is like a characteristic of the data so you can have a general idea of your data. 
+```
+
+#6.a
+help(mode)
+```
+Description
+
+Get or set the type or storage mode of an object.
+
+Usage
+
+mode(x)
+mode(x) <- value
+storage.mode(x)
+storage.mode(x) <- value
+Arguments
+.
+.
+.
+```
+#6.b
+```
+With the mode function you can obtain the type of element of the object in the data structure. 
+```
+mode(ChairOrders$color)
+```
+The output is:
+            [1] "numeric"
+```
+mode(ChairOrders$done)
+
+```
+The output is:
+            [1] "logical"
+```
+
+#General Questions
+#For saving space I decided to not print the outputs in this session. 
+#1
+mydata <- data.frame(a = numeric(0), b = logical(0), c = character(0))
+data_a <- c(12,56,30,18)
+data_b <- c(TRUE,TRUE,FALSE,TRUE)
+data_c <- c("YES","NO","NO","YES")
+my_newdata <- data.frame(data_a,data_b,data_c)
+mydata <- edit(my_newdata)
+#2
+vector_int=c(8:17)
+lenght(vector_int)
+#3
+lt <- "My homework list"
+movies <- c("Inglorious Bastards","The life is beautiful","Match Point")
+expences <- c(1500,2500,900,1100,1150)
+family <- "Vanessa"
+my_homework_list <- list(title=lt,movies=movies,expenditures=expences,family_members=family)
+#4
+vector_inc=seq(100,110,0.5)
