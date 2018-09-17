@@ -1,0 +1,16 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#I create a separate notebook and download the file again, I do not know what is my mistake but doing this I see that is.na is not working. However, as in the previous notebook =="" WORK well.
+
+rm(list=ls()) 
+scores <- read.table("scores_9_14_16.txt",sep="\t",header = TRUE) 
+#head(scores)
+is.na(scores) #this does NOT work
+#scores=="" #this one works OK
+```
+
+

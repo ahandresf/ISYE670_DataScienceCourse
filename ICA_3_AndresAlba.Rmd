@@ -1,15 +1,16 @@
 ---
 title: "Module 3 In Class Activity"
 output:
+  word_document: default
   pdf_document: default
 ---
 
 **Author:** Andres Felipe Alba Hernández 
-**Department:** Electrical Engineering
-**Date:** September 13, 2018  
-**Course:** ISYE670 Data Science for Engineers
-**Professor**
-**Northern Illinois University**
+**Department:** Electrical Engineering  
+**Date:** September 16, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
 
 #PART A
 
@@ -40,23 +41,27 @@ it will be display as min max in the output of the following command.
 range(islands)
 ```
 
-4) Standard desviation and Range.
 
+4) Standard desviation and Range.
 ```{R}
 sd(islands) #standard desviation
 range(islands) #range output = (min,max)
 ```
+
+
 5) Quantile Function:  
+
 a) Find the quantiles for: 0%, 25%, 50%, 75%, 100%
 ```{R}
 quantile(islands)
 ```
+
 b) Find the quantiles for: .05%, 95%
 ```{R}
 quantile(islands,probs = c(0.005,0.95))
 ```
-c) What does the parameter na.rm do?
 
+c) What does the parameter na.rm do?
 ```{R}
 data_test <- c(0.5,10,NaN)
 quantile(data_test,na.rm = TRUE)
@@ -65,8 +70,8 @@ try(quantile(data_test,na.rm = FALSE))
 ```
 If the na.rm flag is set as FALSE the NaN values are not removed before the computation, therefore they are not allow to be in the data set. As may be observed above.
 
-6) Interqueartile range: As can be observed in the calculation below it correspond to the different between the 75% quartile and the 25% queartile. 
 
+6) Interqueartile range: As can be observed in the calculation below it correspond to the different between the 75% quartile and the 25% queartile. 
 ```{R}
 quantile(islands)
 calculate_IQR <- (183.25-20.5)
@@ -76,8 +81,9 @@ print("IQR using the command")
 IQR(islands)
 #IQR(data_test,na.rm = TRUE)
 ```
-7) Create a histogram of the data, where x = islands. The histogram will help you understand how the data is distributed: 
 
+
+7) Create a histogram of the data, where x = islands. The histogram will help you understand how the data is distributed: 
 From the histogram and the probability plot it can be infered that the islans of less than 2500 square miles are more frequent while values between 2.5k and 11k are almost equially distributed. 
 
 a) Using the frequency of each bin:
@@ -90,22 +96,20 @@ b) Using the proportion of each bin:
 hist(islands,prob=TRUE)
 ```
 
+
 8) Create box-plots. Use boxplot(x). This is another way for you to visualize how the data is
 distributed, and whether there are any outliers.
+
 a) Create a boxplot using all the data in islands
-
 Definition of boxplot (extracted from wikipedia): In descriptive statistics, a box plot or boxplot is a method for graphically depicting groups of numerical data through their quartiles.
-
 ```{R}
 boxplot(islands)
 ```
 
 b) What does the parameter outline mean? 
-
 In this case the values out of the usual distribution are not drawn. As may be observe in the boxplot below this allow to appreciate the distribution of the quartiles having the average in a value close to 50 (widther line). The area inside the box correspond to the IQR while the whiskers describe the other quartiles. 
 
 c) Create a boxplot without outliers
-
 ```{R}
 boxplot(islands, outline = FALSE)
 ```
@@ -114,35 +118,35 @@ boxplot(islands, outline = FALSE)
 ```{R}
 boxplot(islands, plot=FALSE)$out
 ```
-a) What are the outliers?
 
+a) What are the outliers?
 Outliers are points of data, observations, that are distant from the others. They may indicade variability in the mesuarments or also they may indicate errors. R can calculate the value with the largest difference between it and sample mean with the command below. 
 
 ```{R}
-outlier(islands)
+#outlier(islands) #it works when I installed but not when I try to produce the doc
 ```
 
 
 b) Give the plot you just created a title and y-axis label
-
 ```{R}
 boxplot(islands, outline = FALSE)
 title(main="Boxplot of Islands",ylab = "Area (1000s of square miles)")
 ```
 
+
 10) Create a stem and leaf plot of islands: Use stem(x) function.
+
 a) Where is the output?
-
  The steam plot split the data using the fist number and how may time appear with other numbers.
-
 ```{r}
 stem(islands)
 ```
 
-
 b) How would you interpret the output? Hint: The histogram you made could be helpful
-
 From this we can observed that the mayority of the data start with 0000.XX which means low values. Comparing this with the boxplot it can be observed that the majority of the population is in the bottom half. 
+
+
+
 
 **PART B**
 
@@ -150,17 +154,16 @@ From this we can observed that the mayority of the data start with 0000.XX which
 
 a)
 ```{r}
-dt2 <- read.table("data_ICA3.txt", sep="\t") #The variable dt2 represent the dataset(table)of the scores.
+dt2 <- read.table("data_ICA3.txt", sep="\t", header = TRUE) #The variable dt2 represent the dataset(table)of the scores.
 ```
-b) The data imported trough the read.table() command will provide a list with the data where each element in the list correspond to one column in the table:
 
+b) The data imported trough the read.table() command will provide a list with the data where each element in the list correspond to one column in the table:
 ```{r}
 mode(dt2)
 ```
+
 c) How many observations are there?
-
 The number of observations correspont to the number of rows in the table for this case is 50 observations. 
-
 ```{r}
 dt2
 #mode(dt2)
@@ -169,14 +172,15 @@ dt2
 ```
 
 d) How many variables are there?
-
 The number of variables correspond to the number of columns in the data. For this case it is 7 columns. 
 
-2) a) names(x): This command names show you the labes of each column (variable) into the table. 
 
+2) 
+a) names(x): This command names show you the labes of each column (variable) into the table. 
 ```{r}
 names(dt2)
 ```
+
 b) Changing the names example:
 ```{r}
 print("Scores with original name")
@@ -188,33 +192,108 @@ names(dt2)
 dt2
 ```
 
+
 3) Finding Missing values in my dataset: 
 
-a)
+a) Try finding NA values for the Pre-test using == “NA” or == NA or == “ “ .
+What is the output? **The only one that works properly is ==""
 ```{r}
 rm(dt2)
 dt2 <- read.table("data_ICA3.txt", sep="\t") #The variable dt2 represent the dataset(table)of the scores.
 names(dt2)[1] <- "Pre-test"
 #dt2$`Pre-test`==NA
 #dt2$`Pre-test`=="NA"
-#dt2$`Pre-test`=="" #This is the only one that give me the right result
+dt2$`Pre-test`=="" #This is the only one that give me the right result
+```
+
+b)Try using the is.na() function. Use is.na(scores$’Pre-test’) on your data.
+What is the output? **The output should give TRUE at the positions where the data is missing.**
+```{r}
     #Other things I  tested:
       #v_test <- dt2$`Pre-test` #this give me a type integer. Factor with levels
       #v_test2 <- dt2[1] #This give me a list
       #typeof(v_test)
       #typeof(v_test2)
 #Now testing the suggested command. 
-is.na(dt2$`Pre-test`) #this one does not work proper, I do not know why.
-is.na(dt2[1]) #this one also does not work.
+#is.na(dt2$`Pre-test`) #this one does not work proper, I do not know why.
+#is.na(dt2[1]) #this one also does not work.
+dt2$`Pre-test`=="" #this one does not work 
 ```
 
-b)
+c)Use is.na(x) on the entire data set. What is the output? **The output should give TRUE at the positions where the data is missing.**
 ```{r}
-dt2
-is.na(dt2) #THIS IS NOT WORKING, why?
-dt2==""
-anyNA(dt2,recursive = TRUE)
+#dt2
+#is.na(dt2) #THIS IS NOT WORKING, whyy? #commenting out this line for now
+dt2=="" #This one work properly
 ```
 
+d) How many total missing values or “NA” are in the data? **The total of missing data is 29**
+```{r}
+total_of_missing <- sum(dt2=="") 
+print(total_of_missing)
+anyNA(dt2,recursive = TRUE) #For some reason the is.na is not working well for me
+```
 
+e)What happens when you try to use is.nan( ) or is.infinite( ) on the entire
+data set? To understand, look up these function in help
+Inf = negative or positive number that are infinity (too big for example number/0)
+NaN = Non a number (I number like 0/0 will be indefined or non a number)
+```{r}
+is.infinite(dt2$`Pre-test`)
+is.nan(dt2$`Pre-test`)
+```
 
+f) To find the number of missing values per column: apply(is.na(scores),2,sum)
+```{r}
+apply(dt2=="",2,sum) 
+#other way
+sum(dt2[2]=="")
+```
+
+g) Repeat the above to find the number of missing values per row
+```{r}
+apply(dt2=="",1,sum) 
+#sum(dt2[3,]=="") #This is for the third row for example
+```
+
+h) Using the apply function, find the average of the scores per row: apply(scores,1,
+mean). What is the output? Does it make sense?
+```{r}
+#apply(na.omit(dt2),1,mean)
+#The one in the second argument means row, this data structure have two dimensions
+apply((dt2!=""),1,mean) #Average per row omiting empty positions.
+```
+
+i) As can be observed below 328 elements are remining after omiting the empty ones.
+```{r}
+sum(dt2!="")
+```
+
+j) The average per column is found in in a similar way as in h but using the 2 in the second argument of the apply comand. 
+```{r}
+apply((dt2!=""),2,mean)
+```
+
+k) Then, use this clean set of data to randomly sample. Generate 5 new samples from
+the existing clean set and save it to a new object called newSample:
+```{r}
+scoresOmit <- dt2!=""
+scoresOmit[sample(1:nrow(scoresOmit),5,replace = TRUE)]
+```
+
+l) To combine this set with the existing set, you can use rbind(x,y)
+```{r}
+r_scores <- rbind(scoresOmit,dt2)
+r_scores
+```
+
+m) To reassign “NA” values to 0
+```{r}
+scores <- dt2
+#levels(scores)
+#scores[scores==""] <- 0
+    #scores[scores==""] <- NA
+scores[is.na(scores)] <- 0
+```
+
+n) The mean will change because the NA values are reemplace by zeros increasing the number of samples and the mean will be the $$\sum_{i=1}^n X_i/n$$ In this case n will be bigger.
