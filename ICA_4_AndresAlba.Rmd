@@ -1,0 +1,74 @@
+---
+title: "ICA4 Module 4"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+  word_document: default
+  pdf_document: default
+---
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** September 23, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+#Initializing
+rm(list=ls()) #Deleting all variables in the enviroment
+#install.packages("tidyr", lib="/home/leasanspy/DataScience_NIU/Rpackages") #Installing the library
+library(tidyr,lib.loc="/home/leasanspy/DataScience_NIU/Rpackages") #Calling the library 
+```
+
+
+
+1. Using R functions, what are the header names?  
+
+The names are the ones listed below: 
+```{r}
+rev_hist=read.csv("Revenue_Historical_2000.csv", header = TRUE)
+names(rev_hist)
+```
+
+2. Output a summary of the data structure. What is the mean of the values in Month 2?  
+
+The mean of the month two is: 5558
+```{r}
+#str(rev_hist)
+summary(rev_hist)
+```
+
+3. Use the gather function to create a new table with the desire structure:  
+```{r}
+#gather(data,key: out_name_column, value: out_data_name, list_of_names_with_columns_gathered)
+new_table_gather=gather(rev_hist, Month, Revenue,Month.1:Month.12) 
+#new_table_gather
+```
+
+4. Use the separate function to separate the values under the “Month” column in part 3.  
+```{r}
+#names(new_table_gather)
+#separate( data, col, into, sep = [regular expression], remove = TRUE, convert = FALSE)
+new_table_separate=separate(new_table_gather,Month,c("Time","Time_Interval"),remove=TRUE,convert=FALSE)
+new_table_separate
+```
+
+5. Use the unite function on the data from part 4 to merge “Time” and “Time_Inverval” create a
+new column to read as “1_Month”
+```{r}
+#unite( data, name_of_new_column, names_of_col_merging_[LIST] , sep = “ “, remove = TRUE)
+new_table_unite=unite(new_table_separate, "New_Time_Month", c("Time_Interval","Time"), sep = "_",remove=TRUE)
+new_table_unite
+```
+
+6. Use the spread function on the data from part 5 such that the columns are the years and
+keep the month in a column.
+
+```{r}
+#spread( data, key: columns_to_spread, value: values_of_spreadColumns, fill= NA, convert = FALSE)
+spread(new_table_unite,Year,Revenue)
+```

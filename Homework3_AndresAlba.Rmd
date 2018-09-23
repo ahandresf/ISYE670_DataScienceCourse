@@ -1,0 +1,103 @@
+---
+title: "Homework Module 3"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+  word_document: default
+  pdf_document: default
+---
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** September 19, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+#Cleaning the enviroment variables
+rm(list=ls()) 
+```
+
+
+```{r}
+Chicago_crime_data=read.csv(file = "Crimes_Chicago_2015.csv",header = TRUE)#Reading data from file and setting that in a dataframe
+```
+
+```{r}
+#Data exploration
+#summary(Chicago_crime_data)
+#structure(Chicago_crime_data)
+#names(Chicago_crime_data)
+#str(Chicago_crime_data)
+```
+***Solution***
+The above information may be use for solving the following questions  
+
+Question 1:  
+(2 points) What are the variables representing?
+The variables represent characteristics of crime cases handle by the Chicago police department.  
+
+Question 2:  
+(2 points) Which variables are factor variables?  
+Case Number, Date, Block, IUCR, Primary Type, Description, Location Description, Arrest, Domestic, FBI code, Update on, and Location.  ##
+
+Question 3: NA values  
+
+a) (3 points) How many total values in the dataset are stored as NA?  
+23810 values in the data set are not available.
+```{r}
+sum(is.na(Chicago_crime_data))
+```  
+  
+b) (5 points) For each variable, how many total values are stored as NA?  
+
+The output below shows the number of Non Available per columns (variable). As may be observed, the majority of the missing data is in X,Y cordinates, and latitude and longitude. Most probably this missing values were not available at the moment of the report. Example: Somebody report an incident through the phone, not unit available to reach the point and it was a minor incident.
+```{r}
+apply(is.na(Chicago_crime_data),2,sum) #apply(dataset,dimension[2=column],function)
+```
+  
+Question 4: Factor Variables  
+a) (2 points) What are the different factor levels for the primary description?  
+
+According to the data 24614 are Domestic Battery Simple crimes.
+```{r}
+#unique(Chicago_crime_data$Primary.Type)
+#unique(Chicago_crime_data$Description)
+sum(Chicago_crime_data$Description=="DOMESTIC BATTERY SIMPLE")
+```
+  
+b) (2 points) How many incidents of arson resulted in an arrest?  
+
+453 incidents in Arson resulted in an arrest.
+```{r}
+sum(Chicago_crime_data$Primary.Type=="ARSON"&Chicago_crime_data$Arrest!=0)
+```
+  
+c) (2 points) How many incidents of arson were in an abandoned building?  
+
+According to the search below 7 incidents where located an abandoned building in ARSON.
+```{r}
+#unique(Chicago_crime_data$Location.Description)
+sum(Chicago_crime_data$Primary.Type=="ARSON"&Chicago_crime_data$Location.Description=="ABANDONED BUILDING")  
+```
+  
+
+d) (1 point) How many incidents in the dataset are domestic and resulted in an arrest?  
+
+Zero domestic incidents result in arrest.
+```{r}
+sum(Chicago_crime_data$Description=="DOMESTIC BATTERY SIMPLE"&Chicago_crime_data$Arrest!=0)
+sum(Chicago_crime_data$Description=="DOMESTIC BATTERY SIMPLE"&Chicago_crime_data$Arrest==0)
+sum(Chicago_crime_data$Description=="DOMESTIC BATTERY SIMPLE")
+```
+  
+e) (1 point) How many non-domestic incidents resulted in an arrest?  
+
+239227 non Domestic incidents result in arrest.
+```{r}
+sum(Chicago_crime_data$Description!="DOMESTIC BATTERY SIMPLE"&Chicago_crime_data$Arrest!=0)
+```
+
