@@ -1,0 +1,144 @@
+---
+title: "ICA 5 Module 5 dplyr_library"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+  word_document: default
+  pdf_document: default
+---
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** September 30, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+Questions 1,2 and 3 can be compacted in the commands line below.
+
+```{r}
+#Initializing
+rm(list=ls()) #deleting enviroment variables
+#Installing the library (only once)
+#install.packages("tidyverse", lib="/home/leasanspy/DataScience_NIU/Rpackages") 
+#install.packages("dplyr", lib="/home/leasanspy/DataScience_NIU/Rpackages") 
+library(dplyr,lib.loc="/home/leasanspy/DataScience_NIU/Rpackages") #Loading the library
+```
+
+4) As may be observed from the commands below the income dataset describes Units sales, Revenue and Expenditure by Region, Department, and Year. 
+
+```{r}
+income <-read.csv("data_module_5.csv",header = TRUE)
+summary(income)
+```
+
+5) The only factor variable in the dataset is the Region and it has three levels {A,B,C}. I consider that Departments could be also a factor variable with levels 1 and 2. 
+
+```{r}
+str(income)
+#income
+```
+
+6) Sample command by number and by percentage:
+
+```{r}
+S1 <- sample_n(income,5) #five random samples
+S2 <- sample_n(income,5) #other five random samples
+S3 <- sample_frac(income, 0.02)
+S4 <- sample_frac(income, 0.02)
+```
+
+```{r}
+print(S1)
+print(S2)
+print(S3)
+print(S4)
+```
+
+7) The select function is used to select desired variables  
+  a) Retrieve only the Department and Year columns  
+  b) Retrieve all columns except the Expenditure column
+```{r}
+select(income,Department,Year) #answer for a
+select(income,-Expenditure) #answer for b
+```
+
+8) Using the help function, answer the following questions in your own words.
+  a) What is the ends_with() function?
+  b) What is the contains() function?
+  c) What is the matches() function?
+  
+All this functions are apply to the columns headers, basically it will select the column name that accomplish certain search using teh helpers.  
+
+For example:  
+
+a) ends_with() will pick the headers that ends with certain string that you give. 
+b) contains() will pick the headers that its name contain the given string, you can choose if you want to ignore or use the case differences.  
+c) matches() this helper help you to pick the right header by using regular expressions.  
+There are other helpers that can be obsered using the help for "select." In order to be more clear, I create one example for each select helper below: 
+  
+```{r}
+#as_tibble(income)
+summary(income)
+summary(select(income, ends_with(match = "ue",ignore.case = TRUE))) #I extract revenue
+summary(select(income, contains("expen",ignore.case = TRUE))) #This should extract Expenditure
+summary(select(income, matches("Ye*"))) #This should extract year
+```
+
+9) The filter function is used to filter rows based on the criteria provided by the user. What
+command will filter the rows/observations where the year is 2000 or 2002?
+
+```{r}
+filter(income, Year == "2000" | Year == "2002")
+```
+
+10) Suppose you want to filter to keep rows where the Year is 2002, and then select the
+Department and Unit_Sales columns, and save it all in a new variable.  
+
+The code below execute both approaches, I use summary only to save space at printing 
+
+```{r}
+sd <- select(filter(income, Year == "2002"), Department, Unit_Sales)
+summary(sd)
+sd_pipe <- income %>% filter(Year=="2002")%>% select(Department, Unit_Sales)
+summary(sd_pipe)
+```
+
+11) The arrange function is used to arrange or re-order rows by a particular column
+Let’s reorder using the Department values. The values should be in ascending order.
+
+```{r}
+arrange(income, Department)
+```
+
+```{r}
+arrange( income, desc(Department))
+```
+
+12)The mutate function is used to create new variables that are functions of existing variables. Create a new data frame that has the Expenditure and Revenue columns, and also create a new column “profit”, which is Revenue minus Expenditure.
+
+```{r}
+m_df <- mutate(select(income, Expenditure, Revenue), profit=Revenue-Expenditure)
+m_df_pipe <- income %>% select(Expenditure,Revenue) %>% mutate(profit=Revenue-Expenditure)
+m_df
+m_df_pipe
+```
+
+Both output have similar results. 
+
+13) Let’s use the group_by and summarise functions to calculate the average expenditure by
+Region
+
+```{r}
+income %>% group_by(Region) %>% summarise(avg_expenditure=mean(Expenditure))
+income %>% group_by(Region) %>% summarise(standarDesviation_expenditure=sd(Expenditure))
+income %>% group_by(Region) %>% summarise(minimum_expenditure=min(Expenditure))
+income %>% group_by(Region) %>% summarise(maximum_expenditure=max(Expenditure))
+income %>% group_by(Region) %>% summarise(Median_of_expenditure=median(Expenditure))
+```
+
+
+

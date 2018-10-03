@@ -1,0 +1,121 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  word_document: default
+  html_notebook: default
+---
+
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 1st, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+rm(list = ls())
+library(dplyr,lib.loc="/home/leasanspy/DataScience_NIU/Rpackages") #Loading the library
+```
+
+
+1) (2 points) Import the data with the headers. How is the data organized? (i.e. what are the
+column names? What does each row of the data represent?)  
+
+From the information below I infered that the data is organized in a way that every observation collected an index which reference the first letter of the state, the state, and the total income by year.
+
+```{r}
+h_data <- read.csv("historical_data.csv") 
+names(h_data)
+str(h_data)
+summary(h_data)
+```
+
+2) Lookup the sample_n and sample_frac functions.
+a) (2 points) Use the appropriate function to randomly choose 15 rows.
+b) (2 points) Use the appropriate function to randomly choose 40%
+
+```{r}
+Sn <- sample_n(h_data,15) #a
+Sf <- sample_frac(h_data,0.4) #b
+str(Sn) #a
+str(Sf) #b
+```
+
+ 3) Output certain columns.
+a) (2 points) Output only the values for the year 2005 and States
+b) (2 points) Output only the values for all the years. (Hint, use the - )
+c) (2 points) Output only the values for columns that begin with a Y
+
+
+```{r}
+#Answer a)
+select(h_data,State,Y2005)
+```
+
+```{r}
+#Answer b
+select(h_data,-Index,-State)
+```
+
+```{r}
+#Answer c
+select(h_data,starts_with("Y"))
+```
+
+4) Output only certain observations.
+a) (2 points) Output only the observations with an index values of A and C and N.
+b) (2 points) Output only the observations related to Illinois and California.
+
+```{r}
+#Answer a
+filter(h_data, Index=="A"|Index=="C"|Index=="N")
+#Answer b
+filter(h_data, State=="Illinois"|State=="California")
+```
+
+5) (2 points) Output data that shows only the index, state, and 2010 income values greater than $1,500,000.
+a) (Extra Credit: 2 points) The same code can be re-written concisely using the pipe operator
+%>%. What is that command?
+
+```{r}
+select(filter(h_data, Y2010>=1500000),Index,State,Y2010) #normal way
+select(h_data,Index,State,Y2010) %>% filter(Y2010>=1500000) #with the pipe opearator
+```
+
+6) (3 points) Output only the state and 2006 values, and arrange the values in descending order of 2006 values. What are the 3 highest income generating states?  
+
+The states of Minnesorta, Pennsylvania, and West Virginia have the highest income:
+
+```{r}
+select(h_data,State,Y2006) %>% arrange(desc(Y2006))
+```
+
+7) (3 points) Using the mutate function, create a new column “ratio” which divides the income of 2015 by 2014. Use the appropriate combination of commands so only the state, 2014, 2015,
+and the new column is saved or output.
+
+
+```{r}
+mutate(select(h_data,Y2014,Y2015),ratio=Y2015/Y2014)
+```
+
+8) (3 points) Using group_by and summarise, create a table grouped by Index and then
+summarizes each group by taking the mean of Y2007
+
+```{r}
+h_data %>% group_by(Index) %>% summarise(mean_2007=mean(Y2007))
+```
+
+9) (3 points) Group the observations by index. Output data that shows the average ratio of 2015 divided by 2014 for each group.
+
+```{r}
+h_data %>% group_by(Index) %>% mutate(ratio=Y2015/Y2014) #This is the answer.
+```
+
+```{r}
+#This is to show more clearly the ratio. 
+h_data %>% group_by(Index) %>% mutate(ratio=Y2015/Y2014) %>% select(ratio)
+```
+
+
