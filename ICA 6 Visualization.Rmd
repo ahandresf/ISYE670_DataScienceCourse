@@ -1,0 +1,296 @@
+---
+title: "ICA 6 Visualization using Basic R Commands"
+output:
+  word_document: default
+  pdf_document: default
+  html_notebook: default
+---
+
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 6th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+#Initializing
+rm(list=ls()) #deleting environment variables
+#Installing the library (only once)
+#install.packages("vcd", lib="/home/leasanspy/DataScience_NIU/Rpackages") 
+library(vcd,lib.loc="/home/leasanspy/DataScience_NIU/Rpackages") #Loading the library
+```
+
+```{r}
+#Loading necessary data set
+data("Arthritis")
+summary(Arthritis)
+```
+
+**Histograms**
+
+1. Let’s create a simple histogram using the Age variable of the Arthritis data frame and give it a title “Age of Arthritis Patients”
+
+```{r}
+hist(Arthritis$Age, main="Age of Arthritis Patients")
+```
+
+a. What is the default horizontal axis label? Arthritis$Age
+b. What is the default vertical axis label? Frequency
+
+2. Create a histogram with 5 breaks (or 6 bins), blue bars, horizontal axis label “Age” and plot title “Colored Histogram with 5 breaks”.
+
+```{r}
+hist(Arthritis$Age, breaks = 6, col = "blue", xlab="Age", main = "Colored Histogram with 6 breaks")
+```
+
+a. What is the default vertical axis label? Frequency
+
+3. Let’s change the vertical axis. Most histograms show the density.
+a)
+```{r}
+hist(Arthritis$Age, breaks = 5, col = "green", xlab="Age", main = "Colored Histogram with 6 breaks", freq = FALSE)
+```
+
+b)  Let’s add a density line to the current plot.
+
+```{r}
+hist(Arthritis$Age, breaks = 5, col = "green", xlab="Age", main = "Histogram with density line", freq = FALSE)
+lines(density(Arthritis$Age), col = "red", lwd = 2) #You need to call the histogram first in order to use lines and density functions
+```
+
+ c) How did the current histogram change? The histogram did not change only the line of density was plotted showing how the values changes inside the bin. 
+ 
+**Barplots**
+
+4. Use the table function on the Improved variable and save it in a new object called “counts”
+
+```{r}
+counts <- table(Arthritis$Improved)
+counts
+str(counts)
+```
+
+a. What are the different factors of Improved? "None" "Some" and "Marked"
+b. How many patients are in each category? 42, 14 and 28 Respectively
+
+5. Let’s create a simple barplot with the title as “Simple bar plot”, horizontal axis label of
+“Improvement” and vertical axis label of “Frequency”
+
+```{r}
+barplot(counts,main = "Simple bar plot", xlab = "Improvement", ylab = "Frequency")
+```
+
+a. Is this a vertical barplot or horizontal barplot? Vertical
+b. What is the default color? Grey
+
+6. Let’s flip it. Add the parameter “horiz = TRUE”, and look at the new plot.
+```{r}
+barplot(counts,main = "Simple bar plot", xlab = "Frequency", ylab = "Improvement",horiz = TRUE)
+```
+
+
+a. Did the axes labels flip? Yes
+b. Redo the command and label the axes properly. Done above
+
+7. From these plots, can you answer the following questions?
+The patients were given one of two treatments: a placebo or treated. Was there a trend
+between the treatment and the patients that improved? 
+
+The biggest frequency in the barplots above agregate the data of placebo and treated. Therefore, you may not conclude directly from those plots.
+
+
+**Stacked and grouped barplots**
+
+8. First, we need to prepare the data. Create a table using Improved as the first input and
+Treatment as the second input from the Arthritis dataset
+
+```{r}
+countsT <- table(Arthritis$Improved, Arthritis$Treatment)
+countsT
+#summary(countsT)
+#hist(countsT)
+```
+
+a. How many of the patients that had “None” improvement and was given a placebo? 29
+b. How many of the patients that were properly Treated and had “Marked” improvement? 21
+c. ** Take note of what the columns and rows are Columns refer to the Treatment given while the rows refer to the improvement. 
+
+9. To create a stacked barplot, the “barplot( )” function is still used. The difference is the input data. 
+
+```{r}
+barplot(countsT,main = "Stacked bar plot", xlab = "Treatment", ylab = "Frequency", col = c("red","yellow", "green"), legend = rownames(countsT))
+```
+
+10. The grouped barplot is created by adding a parameter: “beside = TRUE”
+
+```{r}
+barplot(countsT,main = "Grouped barplot", xlab = "Treatment", ylab = "Frequency", col = c("red","yellow", "green"), legend = rownames(countsT), beside = TRUE)
+```
+
+a. Look at the grouped barplot and the stacked barplot. Are the legends the same?  Yes
+b. What’s different about the two legends? The diference is that instead of being each case agregated, for this time the legends cover three parts. 
+
+**Boxplot**
+
+11. First, load the “mtcars” dataset. This set contains more numerical values for a boxplot to make sense.
+
+```{r}
+data("mtcars")
+```
+
+12. Create a boxplot only for the variable mpg in the mtcars dataset.
+```{r}
+boxplot(mtcars$mpg, main="Box plot", ylab="Miles per Gallon")
+```
+
+a. Are there any outliers? Yes they are. 
+b. Can you identify where the median is? Yes it is close to 19.
+```{r}
+median(mtcars$mpg)
+```
+
+13. Instead of grouping the mpg together in a box plot, let’s split the data by the number of
+cylinders. In other words, let’s create a series of mpg boxplots, each corresponding to a
+category in the “cyl
+
+```{r}
+boxplot(mpg ~ cyl, data = mtcars, main = "Car Mileage Data", xlab = "Number of Cylinders", ylab ="Miles per Gallon",col="green")
+```
+
+a. Add color by using the “col” parameter Done above
+b. What do you conclude from this graph? Cars with more cylinders consume more gas than cars wih only 4 cylinders. Also the operation ranges in miles per hours for cars with less cylinders is higher which means they consume less gas. However, the dispersion of the data is also bigger in lower cylinders cars than higher ones. 
+
+
+**Dotplot**
+
+14. Let’s create a dotchart that plots the mpg of each car.
+
+```{r}
+dotchart(mtcars$mpg, label=rownames(mtcars), main="Gas Mileage for Car Models", xlab = "Miles
+per Gallon")
+```
+
+15. To change the size of the labels, use the parameter “cex”. Set cex to 0.7 and see how the plot changes.
+
+```{r}
+dotchart(mtcars$mpg, label=rownames(mtcars), main="Gas Mileage for Car Models", xlab = "Miles
+per Gallon",cex=0.7)
+```
+
+The character size is smaller and the y axes is bigger in a way that the text of the labels in y axes fit the plot. 
+
+16. Examine this plot  
+a. Can you see any relationship in this plot? You may be able to say that few brands fabricate cars with low mpg and those are mostly sport kind cars. Most of the brands concentrate between the range of 15 to 25 miles per galon. Also you can see how toyota fabricate efficient cars compare with other brands.
+b. Is this a plot you would use? I think is a useful plot because it can give some hints about the relation between brands and efficient. Also it can be useful if your goal is to pick cars in a certain mpg range so you may check only the brands that are in that range of efficiency. 
+
+17. Let’s use the information about the cylinders from the boxplot created in the previous
+section. A dot plot with grouped, sorted and colored data can be made.
+
+```{r}
+mcars_order <- mtcars[order(mtcars$mpg) , ] #this order the data set in miles per galon an store that in a new variable x
+mcars_order$cyl <- factor(mcars_order$cyl) # make the number of cylinder a factor variable 
+
+#Using the factor you create a new variable with the color for each class, depending on the number of cylinders
+mcars_order$color[mcars_order$cyl==4] <- "red"
+mcars_order$color[mcars_order$cyl==6] <- "blue"
+mcars_order$color[mcars_order$cyl==8] <- "darkgreen"
+```
+
+```{r}
+dotchart(mcars_order$mpg, label=rownames(mcars_order), cex = 0.7, groups = mcars_order$cyl, gcolor = "black", color = mcars_order$color, main = "Gas Mileage for car models, grouped by cylinder", xlab="Miles per Gallon", pch = 19)
+#“pch” makes the dots solid, for example 25 makes them triangles instead of dots. “gcolor” prints the numbers 4, 6, and 8 in black
+```
+
+e. What trends do you see now? Is this plot better or worse than the first dotplot?
+
+It is better because you are adding an additional dimension(variable) of information. Therefore, you can see that the main variable that define the mpg is the number of cylinders, however, among each group you are also able to observe which brand of cars show better performance with the same number of cylinders. 
+
+**Scatterplot**
+
+18. Let’s plot weight (wt) on the horizontal axis and mpg on the vertical axis.
+
+```{r}
+plot(mtcars$wt, mtcars$mpg, xlab = "Weight of cars", ylab="Miles per galon of the car")
+```
+
+19. Same plot but more "beauty"
+
+```{r}
+plot(mtcars$wt, mtcars$mpg, xlab = "Car Weight [thousand of pounds]", ylab="Miles per Galon of the car", main = "Basic Scatter plot of MPG vs Weight", pch=19)
+```
+
+20. Let’s also add a line of best fit (aka linear regression line), make the line red and increase the line width (lwd).
+
+```{r}
+plot(mtcars$wt, mtcars$mpg, xlab = "Car Weight [thousand of pounds]", ylab="Miles per Galon of the car", main = "Basic Scatter plot of MPG vs Weight", pch=19)
+abline(lm(mtcars$mpg~mtcars$wt), col="red", lwd = 2) #you need to get the plot() first in order to apply this command or you would get an error, because the command is add a straight line to a plot, firts fitting lm=> linear model, using the variables mpgVSwt
+```
+
+**High-density scatterplots**
+
+```{r}
+#creating the dataset
+set.seed(1234)
+n<- 10000
+c1 <-matrix(rnorm(n,mean=0, sd=0.5), ncol=2)
+c2 <-matrix(rnorm(n,mean=3, sd=2), ncol=2)
+mydata <-rbind(c1,c2)
+mydata <- as.data.frame(mydata)
+names(mydata) <- c("x", "y")
+```
+
+21. Create a scatterplot using “plot” with the variables x and y in the “mydata” dataset you just created. Fill in the dots (pch=19) and give it a title.
+
+```{r}
+plot(mydata$x,mydata$y, xlab = "x", ylab = "y", main = "Overlapping observation of N(0,0.5) and N(3,2)",pch=19)
+#plot(x,y)
+```
+
+a. Do you see any trends? you can not split the data easily there so it is kind of hard.
+b. Does this graph give you any information? you can say where the data of both datasets is concentrated and maybe give a set that wil lcontain all your data. But more than that is pretty hard.
+
+22. Use a function called “smoothScatter” that will use density estimates to produce a color
+density representation of the scatterplot.
+
+```{r}
+smoothScatter(mydata$x, mydata$y, main="Smooth Scatterplot using Densities",ylab = "my Y data",xlab = "my X data")
+```
+
+a. What information do you see in the graph now? It is clear that the data have been categorize or separated from this plot. The dark spot will represent the data from N(0,0.5) while the clearer one is related with the data that belongs to N(3,2). Looking more carefully even the mean 3 for the second distribution can be reconize as the darker spot among the clearear set (around 3)
+b. Do you know how many are in the dark area versus the light area? You can not get numerical values from the plots but you can have an idea of the density. 
+
+23. A library called “hexbin” can be used to help determine the density and count.
+a. Need to create the bins for the count first.
+
+```{r}
+#install.packages("hexbin", lib="/home/leasanspy/DataScience_NIU/Rpackages") 
+library(hexbin, lib="/home/leasanspy/DataScience_NIU/Rpackages")
+bin <- hexbin(mydata$x, mydata$y, xbins=50)
+```
+
+24. Then use the “bin” object as the input into plot. There will be a legend that contains the count for each color gradient.
+
+```{r}
+plot(bin, main="Hexagonal Binning")
+```
+
+
+**My own testing**
+
+```{r}
+matrix(rnorm(10,mean=0, sd=0.5), ncol=2)
+```
+
+
+```{r}
+t1<-matrix(c(1,2,3,4),ncol=2)
+t2<-matrix(c(5,6,7,8),ncol=2)
+t1
+rt<-rbind(t1,t2)
+df<-as.data.frame(rt)
+#names(df) <- c("t1", "t2")
+df
+```
+

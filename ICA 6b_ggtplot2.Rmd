@@ -1,0 +1,138 @@
+---
+title: "ICA 6b ICA – Visualization using the ggplot2 package"
+output:
+  word_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 10th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+#This is not going to work unless you put all the dependencies into that folder so run the command without the path. 
+#install.packages("ggplot2", lib="/home/leasanspy/DataScience_NIU/Rpackages", dependencies = TRUE)
+#install.packages("devtools", repos = "http://cran.us.r-project.org", lib="/home/leasanspy/DataScience_NIU/Rpackages")
+```
+
+
+```{r}
+#install.packages("ggplot2")
+```
+
+
+```{r}
+library("ggplot2")
+```
+
+```{r}
+library(vcd,lib.loc="/home/leasanspy/DataScience_NIU/Rpackages") #Loading the library
+data("Arthritis", package = "vcd")
+```
+```{r}
+names(Arthritis)
+```
+
+
+**Question 1**
+```{r}
+ggplot(Arthritis, aes(x = Treatment, y = Age)) +
+geom_boxplot(fill = c("pink","blue")) +
+labs(title = "Boxplot for Age by Treatment", x = "Treatment", y = "Age") +
+theme_bw()
+geom_boxplot()
+```
+
+**Question 2**
+
+**Part a:**
+
+```{r}
+ggplot(Arthritis, aes(x = Sex)) + geom_bar(aes(fill = Improved)) +
+scale_fill_manual( values = c("pink","green","blue")) +
+labs(title = "Number of Females and Males", x = "Frequency", y = "Gender") +
+theme_bw()
+```
+
+**Part b**
+
+```{r}
+ggplot(Arthritis, aes(x = Improved)) + geom_bar(aes(fill = Sex)) +
+labs(title = "Number of Females and Males in each Improvemer", x = "Frequency", y = "Gender") +
+coord_flip()+
+theme_bw()
+```
+
+**Part c**
+
+```{r}
+ggplot(Arthritis, aes(x = Improved)) + geom_bar(aes(fill = Sex),colour="black") +
+
+labs(title = "Number of Females and Males in each Improvemer", x = "Frequency", y = "Gender") +
+coord_flip()+
+theme_bw()
+```
+
+**Part d**
+
+```{r}
+ggplot(Arthritis, aes(x = Improved)) + geom_bar(aes(fill = Sex),colour="black") +
+scale_fill_manual( values = c("purple", "orange")) +
+labs(title = "Number of Females and Males in each Improvemer", x = "Frequency", y = "Gender") +
+coord_flip()+
+theme_bw()
+```
+
+Create the following using the iris dataset
+
+```{r}
+data("iris")
+names(iris)
+```
+
+**Question 3**
+
+**Part a**
+
+```{r}
+levels(iris$Species)
+```
+
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(fill=Species))+
+geom_point(aes(colour=Species))+
+labs(title = "Iris Species")
+```
+
+**Part b**
+
+```{r}
+ggplot(iris, aes(x = Species, y = Petal.Length)) +
+geom_boxplot(aes(fill=Species)) +
+labs(title = "Boxplot Iris Species", x = "Species", y = "Petal Lenght") +
+theme_bw()
+#geom_boxplot()
+```
+
+**Part c**
+
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Petal.Width)) +
+geom_point(aes(fill=Species))+
+geom_point(aes(colour=Species))+
+geom_smooth(aes(mapping=Species),method=loess)+
+labs(title = "Iris Species with smooth line")
+```
