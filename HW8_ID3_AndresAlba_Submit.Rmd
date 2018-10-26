@@ -1,0 +1,188 @@
+---
+title: "Homework8 ID3"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 23rd, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+#Initializing
+rm(list=ls()) #deleting environment variables
+#Installing the library (only once)
+#install.packages("data.tree") 
+source("ID3 Algorithm.R")
+```
+
+
+```{r}
+car_table <- read.csv("car.data")
+nombres <- c("buying", "maint","doors","persons","lug_boot","safety","class")
+```
+
+```{r}
+names(car_table)<-nombres
+```
+```{r}
+str(car_table)
+levels(car_table$persons)
+```
+
+
+ Data Summary (7 points): Describe the data by at least answering the following:
+What is the data? What information is in the data?
+
+**Dataset Description**
+
+Car Evaluation Database was derived from a simple hierarchical decision model originally developed for the demonstration of DEX (M. Bohanec, V. Rajkovic). This model evaluate a car according to a concept structure where Price and Technology describe the car. The Price is also a structure with two elements buying price and price of maintenance. By another hand the Tech Structure will contain one intermedian concept Comfort and one attribute called safety. Comfort is composed by doors, persons, and lugboot.
+
+How big is this data set? 1728 instances 
+What are the variables and what do the values mean? 
+```{r}
+names(car_table)
+levels(car_table$class)
+```
+
+
+buying: buying price
+maint: price of the maintenance
+doors: number of doors
+persons: capacity in terms of persons to carry
+lug_boot: the size of luggage boot
+safety: estimated safety of the car
+
+What is the target variable? What are the possible classifications?
+
+The target variable for this dataset is class and it has 4 possible levels. Unaccurate (unacc), accurate (acc), good (good), and very good (vgood).
+
+For each variable, what are the major characteristics? (i.e. range,
+interquartile range, median, mean, standard deviation, variance,
+numeric/Boolean/character, etc)
+
+```{r}
+summary(car_table)
+```
+
+Are there any missing values? 
+According to the documentation there are non-missing values in the dataset.
+
+What is the distribution of data points with respect to the target variable?
+
+**Data Preparation/Manipulation** (3 points)
+ How did you create the training set and test set?
+```{r}
+randNumbers <- sample(nrow(car_table) , floor(0.8*nrow(car_table)), replace = FALSE)
+TrainingSet <- car_table[ randNumbers, ]
+ValidationSet <- car_table[-randNumbers,]
+```
+```{r}
+str(TrainingSet)
+str(ValidationSet)
+ValidationSet
+```
+
+
+```{r}
+#nrow(car_table) #1727
+#floor(0.8*nrow(car_table)) #1381
+#little test
+non_rand<-c(1,2,3)
+car_table[non_rand,]
+```
+
+In order to use the ID3 algorithm the data needs to be in such a way that the last column correspond to the target variable (marked as class in the UCI Repository)
+
+**Model** (8 points)
+
+What variables are used in the decision tree? How big is it? What is the most
+important attribute/variable?
+
+The tree have six levels of deep, the fatures used in this tree are: safety, person, buying, maint, log_boot, door. 
+
+ What does it look like?
+```{r}
+tree <- Node$new("CAR") #initial node, placeholder for the tree
+TrainID3(tree,TrainingSet) #uses the tree created before 
+print(tree, "feature")
+```
+
+**Prediction Results and Analysis** (3 points)
+ Predict the target variable for your test set.
+ How accurate is it? How many were correct and how many were incorrect?
+
+```{r}
+#ValidationSet_predic <- subset(ValidationSet, select = c(1:6))
+#ValidationSet_predic
+Predict(tree,ValidationSet[3,1:6])
+#Predict(tree,ValidationSet_predic[,1:6])
+```
+
+
+```{r}
+#Handling error with exception and counting the number of errors
+correct=0
+incorrect=0
+counter=0
+non_classify=0
+non_classify_index=array()
+for(i in 1:nrow(ValidationSet)) 
+{
+  #print(i)
+  counter=counter+1
+  tryCatch({
+            i_pre=Predict(tree,ValidationSet[i,1:6])
+            if(i_pre==ValidationSet[i,7]){
+              correct=correct+1}
+            else{
+              incorrect=incorrect+1}
+            }, 
+  error=function(e){
+          print(i)
+          non_classify=non_classify+1
+          non_classify_index[non_classify]=i
+          })
+}
+PD=correct/nrow(ValidationSet)
+Pmiss=incorrect/nrow(ValidationSet)
+#Pnon_decide=non_classify/nrow(ValidationSet)
+#Non_possibleClass=length(non_classify_index
+print("----------------")
+print(nrow(ValidationSet))
+print(correct)
+print(incorrect)
+print(PD)
+print(Pmiss)
+print(non_classify)
+print(counter)
+```
+
+
+**Conclusion** (5 points)
+ Do you think the ID3 algorithm is an appropriate model for this data set?
+Why or why not?
+The Algorithm shows an efficient a probability of correct classification of 93%, with and incorrect classification of 5% and another 2% that the algorithm was not able to classify while using 80% of the data for training. The total error probability will correspond to a 7% and depending on the application this error can be appropiate or not, however, considering that 80% of the total data was used for training I think the performance is not as goos as I expected because the algorithm was not able to generalized. 
+ Why do you think the accuracy was good or not good?
+
+
+```{r}
+fail_row <- c(158, 270, 272, 304, 327 ,340, 346)
+fail_table<- car_table[fail_row,]
+fail_table
+#car_table$buying=="vhigh"
+```
+
+
+
+
+
+
+
+

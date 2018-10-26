@@ -1,0 +1,208 @@
+---
+title: "ICA 8 Using ID3"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+always_allow_html: yes
+---
+
+
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 6th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+**PART A**
+
+1 and 2 install and source the necessary packages. 
+
+```{r}
+#Initializing
+rm(list=ls()) #deleting environment variables
+#Installing the library (only once)
+#install.packages("data.tree") 
+source("ID3 Algorithm.R")
+```
+
+3) Calling the data set.
+```{r}
+data(mushroom)
+str(mushroom)
+summary(mushroom)
+```
+
+4) Setup the tree
+
+```{r}
+tree <- Node$new("mushroom") #initial node, placeholder for the tree
+TrainID3(tree,mushroom) #uses the tree created before and the dataset mushroom
+```
+
+5) Printing the tree
+
+```{r}
+print(tree,"feature","obsCount")
+```
+
+6. Take a look at the printed tree. What feature was used first to split the tree?  
+The first feature used was the color.  
+
+7. What was the second feature to be used?  
+The second feature used was size.  
+
+8. How many leafs correspond to “toxic”? How many leaf nodes correspond to “edible”?  
+In this case three leaf correspond to edible while one leaf correspond to toxic.  
+
+9. To see an image of the tree and its categories, use the command plot(tree).  
+```{r}
+plot(tree)
+```
+
+10. To predict, use the Predict function. What prediction does it make(aka, what is the output)?
+
+```{r}
+Predict(tree,c(color='red',size='large',points='yes'))
+```
+
+11) Next, try to predict whether a mushroom is edible if it is blue, large and points is “no”. You should’ve received an error. Explain why you are receiving this error.
+
+```{r}
+Predict(tree,c(color='blue',size='large',points='no'))
+```
+The output error above is due to the color feature value set as an input (color='blue'), the decision tree does not contain any node in the second level with color blue, therefore, it is not possible to reach the classification. This tree structure is due to the training dataset used, in that dataset we did not have any example where color=blue. 
+
+**PART B**
+
+1. Describe the data.
+This data set includes descriptions of **hypothetical samples** corresponding to 23 species of gilled mushrooms in the Agaricus and Lepiota Family. Each species is identified as definitely edible, definitely poisonous, or of unknown edibility and not recommended. This latter class was combined with the poisonous one. The Guide clearly states that there is no simple rule for determining the edibility of a mushroom.(extracted directly from: https://archive.ics.uci.edu/ml/datasets/Mushroom)
+
+2. How many observations (instances) are there? 8124 instances. 
+3. How many attributes are there? 22 Atributes 
+4. When was the data donated? April 27th, 1987
+5. Are there missing values? Yes there are missing values in the dataset. 
+
+Click on “Data Set Description”
+6. Scroll down until you see item “7”. What is the target value and what are the possible levels or categories? The target value may be to classify between classes: edible=e, poisonous=p, it only have two levels. 
+
+7. This dataset uses single letters to identify different characteristics. What would the
+descriptive value of “e” mean for cap-color? The value e will means red color.  
+
+8. Which of these attributes would be best stored as a logical value? 
+Defintely bruises should be store as a logical value True or False, you may think size and stalk-shape could be also because they only have two levels but in the future new levels may be addes so I will keep them like that.  
+
+9. Scroll down to item “8”. How many missing values are in the dataset and how are they
+denoted?
+2480 values are missing and they are denoted like: "?", this description also mention that all the missing values are only for attribute 11 which is stalk-root.
+
+10. Consider item “9”. What is the distribution of the target value?  
+Class Distribution:  
+    --    edible: 4208 (51.8%)  
+    -- poisonous: 3916 (48.2%)  
+    --     total: 8124 instances  
+
+**PART C**
+
+1. Import the data into R. There is not header in this data set, so it needs to be added. 
+```{r}
+data_table<-read.csv("Mushrooms_1981.csv",header = FALSE)
+```
+
+
+```{r}
+#names(data_table)
+#data_table
+#str(data_table)
+#summary(data_table)
+```
+
+2. Column 1 of the data you imported is the target value, and then Column 2 through 23 are
+the attributes. (This was described on the website.) Name the attributes (columns)
+appropriately using R.
+
+```{r}
+names(data_table) <- c("class","cap-shape","cap-surface","cap-color", "bruises","odor","gill-attachment", "gill-spacing", "gill-size", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-type", "veil-color", "ring-number", "ring-type", "spore-print-color", "population", "habitat")
+```
+
+3. To use the ID3 Algorithm, the target value column must be the last column. There are a few
+different ways to rearrange
+
+
+```{r}
+new_data <- subset( data_table, select = c(2:23, 1))
+str(new_data)
+```
+
+4. Before using an entire dataset, use a small sample of it first to train the data. We can
+randomly generate numbers from 1 to Z
+
+```{r}
+randNumbers <- sample(nrow(new_data) , 100, replace = FALSE)
+```
+
+5. Create a sample set using the indices above.
+
+```{r}
+SampleSet <- new_data[ randNumbers, ]
+str(SampleSet)
+```
+
+6. Apply the ID3 algorithm on this set and print the tree with features and observations. Refer to Part A.
+```{r}
+new_tree <- Node$new("mushroom") #initial node, placeholder for the tree
+TrainID3(new_tree,SampleSet) #uses the tree created before and the dataset mushroom
+```
+
+```{r}
+plot(new_tree)
+```
+
+
+a. For your tree, how many descriptive features were used to build the tree? The descriptive features are three as may be observe because the tree have 3 levels before reach the 
+b. How many leafs correspond to “poisonous”? 5 leafs finish in poisonous.
+c. How many leafs correspond to “edible”? 8 leafs finish in edible. 
+
+7. Examine the tree you created. What is it showing you?
+
+With three descriptive features tha can classify the dataset which means that we can quickly classify a sample because is tree is not that deep. The cap shape will define the samples that can not be define by the other two features. 
+
+8. Try performing a prediction. Input the 4000th observation into the tree to predict its value
+
+```{r}
+Predict(new_tree, new_data[4000,c(1:22)]) #prediction 
+new_data[4000,23] #real one
+```
+
+9. Find an observation that was not used in creating the tree. Use the attributes (first 22
+columns) and predict it. Is it correct? For this three, I found the prediction for the sample 5 does not work well, however, it does work for 10 and 100. The three of them are not in the dataset.
+
+```{r}
+randNumbers
+#First try
+Predict(new_tree, new_data[5,c(1:22)]) #prediction 
+new_data[5,23] #real one
+
+#Second try
+Predict(new_tree, new_data[10,c(1:22)]) #prediction 
+new_data[10,23] #real one
+
+#Third try
+Predict(new_tree, new_data[1000,c(1:22)]) #prediction 
+new_data[1000,23] #real one
+```
+
+
+10. Repeat step 6 using the entire mushroom dataset instead of a small sample set. What does
+the tree look like now? Do you think it’s better?
+
+With the whole data set the decision tree add one more level for the classification that will improve the classification. 
+
+```{r}
+Big_tree <- Node$new("Mushroom") #initial node, placeholder for the tree
+TrainID3(Big_tree,new_data) #uses the tree created before and the dataset mushroom
+plot(Big_tree)
+```
+
