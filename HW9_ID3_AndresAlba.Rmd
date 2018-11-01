@@ -1,0 +1,203 @@
+---
+title: "Homework9 KNN"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** October 26th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**  
+
+```{r}
+#Initializing
+rm(list=ls()) #deleting environment variables
+#Installing the library (only once)
+#install.packages("FNN") 
+library(FNN)
+library(dplyr) #Loading the library
+```
+
+**Data Description**
+
+a) Did the data come with a header or not? The does not have headers, then the headers may be added manually as its done below.  
+
+
+```{r}
+nombres <- c("Code_number","Clump Thickness", "uniformity cell size","uniformity cell shape", "Marginal Adhesion", "Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nuceloili", "Mitoses", "Class Cell")
+cancer_data <- read.csv("breast-cancer-wisconsin.data")
+names(cancer_data)<- nombres
+str(cancer_data)
+```
+
+b) What is the target variable? How well is the data distributed among the target variable?
+
+The target value is Class Cell where the value 2 indicate benign cells and the value 4 indicate malignant cells. The features can help to classify the sample, for example in the summary of the data below it is clear that there are differences in the distribution depending on the class, for example for the malignant class the mean of the Clump thickness is 7.1 while for the benignant it is 2.9. 
+
+```{r}
+summary(cancer_data)
+Malignant<-cancer_data %>% filter(`Class Cell`== 4)
+Bening <- cancer_data %>% filter(`Class Cell`== 2)
+```
+```{r}
+print('Malignant -------')
+summary(Malignant)
+print('Benign -------')
+summary(Bening)
+```
+
+
+
+c) What are the possible attributes? 
+
+```{r}
+str(cancer_data)
+```
+
+**Note:** I extracted the Attributed table below from:
+https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/breast-cancer-wisconsin.names
+
+As it can be appreciated below each data value take a value between 1 and 10. However the Bare Nuclei is the only factor value. The classes from 1-6 can contain missing values that are marked as "?"" according to the documentation, however, this can be fixed changing this data for a value such as zero. 
+
+
+Attribute Information: (class attribute has been moved to last column)
+
+   #  Attribute                     Domain
+   -- -----------------------------------------
+   1. Sample code number            id number
+   2. Clump Thickness               1 - 10
+   3. Uniformity of Cell Size       1 - 10
+   4. Uniformity of Cell Shape      1 - 10
+   5. Marginal Adhesion             1 - 10
+   6. Single Epithelial Cell Size   1 - 10
+   7. Bare Nuclei                   1 - 10
+   8. Bland Chromatin               1 - 10
+   9. Normal Nucleoli               1 - 10
+  10. Mitoses                       1 - 10
+  11. Class:                        (2 for benign, 4 for malignant)
+
+**Data preparation**
+
+In order to use the KNN algorithm the dataset should not contain NA values and the data needs to be numeric. Therefore some preprocessing has to be done in that direction.  
+
+```{r}
+length(names(cancer_data)) #698
+#names(cancer_data)
+cancer_data[cancer_data=="?"]<-0 #This will create NA levels when you have factor levels and you do not have 0 in the possible levels. 
+cancer_data <- na.omit(cancer_data) #I would like to omit the NA values. 
+```
+
+```{r}
+cancer_data$`Bare Nuclei` <- as.numeric(as.character(cancer_data$`Bare Nuclei`))
+#as.numeric(cancer_data$`Bare Nuclei`) #This will give you the index level instead of the value,( that is the reason why you may use as.character() firts
+```
+
+**Model**
+
+a) Create a training set and test set using a 75%/25% split, respectively
+
+The following code split the data in 75 and 25%. Then it store the training data, the labels (classification) of the training, the Validation data, and the labels of the validation data in different data frames. 
+
+```{r}
+set.seed(1234)
+index <- sample(2, nrow(cancer_data), replace = TRUE, prob = c(0.75, 0.25))
+
+#Index 1 refer to the 75% of the data
+Cancer_TrainSet <- cancer_data[index == 1, 1:length(names(cancer_data))-1] #This skip the last column, label
+Cancer_TrainLabel <- cancer_data[index == 1, length(names(cancer_data))] #it takes only the label
+
+#Index 2 refer to the 25% of the data- 
+Cancer_ValidationSet <- cancer_data[index == 2, 1:length(names(cancer_data))-1]
+Cancer_ValidationLabel <- cancer_data[index == 2, length(names(cancer_data))]
+```
+
+It is good to take a look on the resulting data to be sure that the preprocessing was correct. 
+
+```{r}
+str(Cancer_TrainLabel)
+str(Cancer_TrainSet)
+Missing <- cancer_data %>% filter(`Bare Nuclei`== "?")
+```
+
+```{r}
+sum(Cancer_TrainSet=="?")
+sum(Cancer_ValidationSet=="?")
+#summary(is.na(Cancer_TrainSet))
+```
+
+
+b) Perform kNN. Consider k values from 1 to 50. Find the accuracy of your model for these
+values and plot this as a line graph. (Hint: use a for loop)
+c) Which k value provides the best accuracy? What is the accuracy value?
+d) Is the model good or bad? Why do you think so and what would you do to improve the
+model?
+
+
+```{r}
+sum(is.na(Cancer_TrainSet))
+sum(is.na(Cancer_ValidationSet))
+```
+
+
+```{r}
+#prediction using the model
+predictions_K5 <- knn(train=Cancer_TrainSet, test=Cancer_ValidationSet, cl = Cancer_TrainLabel, k = 5, prob = FALSE)
+```
+
+```{r}
+#str(predictions_K5)
+size_validation=length(Cancer_ValidationLabel)
+classification_mistake<-length((which(as.numeric(as.character(predictions_K5)) != Cancer_ValidationLabel))) 
+accuracy_prediction <-classification_mistake/size_validation
+print(accuracy_prediction)
+#Evaluation of the model
+#which(predictions_K5 != Cancer_ValidationSet)
+#EvaluationTable <- data.frame(predictions_K5, Cancer_ValidationLabel)
+#EvaluationTable
+```
+
+```{r}
+accuracy_prediction
+```
+
+
+```{r}
+length(predictions_K5)
+length(Cancer_TrainLabel)
+nrow(Cancer_TrainSet)
+nrow(Cancer_ValidationSet)
+```
+
+
+
+
+```{r}
+size_validation=length(Cancer_ValidationLabel)
+classification_mistake<- 0
+accuracy_prediction <- 0
+Accuracy_array<-c()
+for(i in 1:50)
+  {
+  predict_i<-knn(Cancer_TrainSet, Cancer_ValidationSet, cl = Cancer_TrainLabel, k = i, prob = FALSE)
+  size_validation=length(Cancer_ValidationLabel)
+  classification_mistake<-length((which(as.numeric(as.character(predict_i)) != Cancer_ValidationLabel))) 
+  accuracy_prediction <-classification_mistake/size_validation
+  #print(accuracy_prediction)
+  Accuracy_array[i]<-accuracy_prediction
+  }
+print("done with the prediction array")
+```
+
+The maximum was found for k=7.
+
+```{r}
+#print(Accuracy_array)
+max(Accuracy_array)
+which.max(Accuracy_array)
+```
+
