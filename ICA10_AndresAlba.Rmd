@@ -1,0 +1,280 @@
+---
+title: "ICA 10 Naive Bayes Classifier"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** November 6th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University** 
+```{r}
+rm(list=ls()) #cleaning environment variables
+```
+
+
+1) Installing libraries
+```{r}
+#installed.packages("e1071")
+#installed.packages("mlbench")
+```
+
+2) Calling libraries
+```{r}
+library(e1071)
+library(mlbench)
+```
+
+Note: Because the function its seems is going to be deprecated the documentation was found at:
+Ref1. https://www.rdocumentation.org/packages/e1071/versions/1.7-0/topics/naiveBayes
+
+3) What is the “apriori” component of the class?
+
+Because we are using the Naive Classifier to calculate the a-posterior probabilities of a categorical class using the Bayes rule. The apriori component reference the class distribution for a dependent variable. 
+
+4. What is the “tables” component of the class?
+
+A list of tables, one for each predictor variable. For each categorical variable a table giving, for each attribute level, the conditional probabilities given the target class. For each numeric variable, a table giving, for each target class, mean and standard deviation of the (sub-)variable.
+
+5. Look at “na.action”. What does this parameter do? What is the default action?
+
+Definition: na.action is a method and na.action.default its is default method that extracts the na.action component of a list if present. It define how to handle the NA values. For example you can choose omit na values or exlude them. 
+
+
+A function to specify the action to be taken if NAs are found. The default action is not to count them for the computation of the probability factors. An alternative is na.omit, which leads to rejection of cases with missing values on any required variable. (NOTE: If given, this argument must be named.)
+
+Lets check the sintax: 
+
+model.omit <- lm(y2 ~ y1, data = anscombe, na.action = na.omit)
+model.exclude <- lm(y2 ~ y1, data = anscombe,na.action = na.exclude)
+
+Lets check the current option. 
+```{r}
+getOption("na.action") #default
+```
+
+6. Look at the “predict( )” command. The two crucial inputs are object and newdata.
+
+This method receive two arguments, the first positional argument is an object taht contain the model for which the prediction is desire, the second argument is the data that we will input in the model for getting a prediction (classification)
+
+
+newdata: A dataframe with new predictors (with possibly fewer columns than the training data). Note that the column names of newdata are matched against the training data ones.
+
+
+**Loading Data**
+
+```{r}
+data("HouseVotes84")
+```
+
+Attributes as reference: 
+|   1. Class Name: 2 (democrat, republican)
+|   2. handicapped-infants: 2 (y,n)
+|   3. water-project-cost-sharing: 2 (y,n)
+|   4. adoption-of-the-budget-resolution: 2 (y,n)
+|   5. physician-fee-freeze: 2 (y,n)
+|   6. el-salvador-aid: 2 (y,n)
+|   7. religious-groups-in-schools: 2 (y,n)
+|   8. anti-satellite-test-ban: 2 (y,n)
+|   9. aid-to-nicaraguan-contras: 2 (y,n)
+|  10. mx-missile: 2 (y,n)
+|  11. immigration: 2 (y,n)
+|  12. synfuels-corporation-cutback: 2 (y,n)
+|  13. education-spending: 2 (y,n)
+|  14. superfund-right-to-sue: 2 (y,n)
+|  15. crime: 2 (y,n)
+|  16. duty-free-exports: 2 (y,n)
+|  17. export-administration-act-south-africa: 2 (y,n)
+
+```{r}
+str(HouseVotes84)
+```
+
+7. What is the name of the column for the target variable?
+The name is Class. 
+
+8. What are the possible values off the target variable?
+republican or democrat
+
+9. For each descriptive variable, what are the possible values?
+
+handicapped-infants: y, n.
+water-project-cost-sharing: y, n.
+adoption-of-the-budget-resolution: y, n.
+physician-fee-freeze: y, n.
+el-salvador-adi: y, n.
+religious-groups-in-schools: y, n.
+anti-satellite-test-ban: y, n.
+aid-to-nicaraguan-contras: y, n.
+mx-missile: y, n.
+immigration: y, n.
+synfuels-corporation-cutback: y, n.
+education-spending: y,n.
+superfund-right-to-sue: y,n.
+crime: y,n.
+duty-free-exports: y,n.
+export-administration-act-south-africa: y,n.
+
+There are NA number for some fields. 
+
+10. Are there missing values?
+
+Yes there are 392. 
+
+```{r}
+sum(is.na(HouseVotes84))
+```
+
+**Build the Naïve Bayes classifier**
+
+```{r}
+descritive_features_data<-HouseVotes84[1:nrow(HouseVotes84),c(2:17)]
+class_labels<-HouseVotes84[1:nrow(HouseVotes84),1]
+model <- naiveBayes(descritive_features_data , class_labels)
+```
+
+```{r}
+length(class_labels)
+```
+
+11. Describe model: What type of data structure is it? What information does it contain?
+
+The output is a list structure. The first element of the list contain how many elements do you have per class label, the second element contain the class label probability per descriptor P(ci|ai), the third element contain the levels per class, and the fourth one give back the method ussed to create the model.
+
+$call
+naiveBayes.default(x = descritive_features_data, y = class_labels)
+
+This computes the conditional a-posterior probabilities of a categorical class variable given independent predictor variables using the Bayes rule.
+
+
+```{r}
+#typeof(model)
+#typeof(model[1])
+#typeof(model[2])
+#typeof(model[3])
+#typeof(model[4])
+#model[1]
+#model[2]
+#model[3]
+model[4]
+```
+
+
+12. Perform the two commands (below). How many of the predictions are the same?
+
+The output of both comands are the same. 
+
+```{r}
+HouseVotes84[1:10, ]
+HouseVotes84[1:10,c(2:17)]
+```
+
+
+A dataframe with new predictors (with possibly fewer columns than the training data). Note that the column names of newdata are matched against the training data ones.
+
+
+```{r}
+prediction<-predict(model, HouseVotes84[1:10,c(2:17)])
+predict(model, HouseVotes84[1:10, ])
+```
+
+13. How many rows are there?
+
+We do have 10 rows, with two columns. Each column represent the probability of each class, so the predictor picks the highest one. 
+```{r}
+predict(model, HouseVotes84[1:10,], type = "raw")
+```
+
+14. For each row, which column has the higher value? Does this correspond to the prediction?
+
+Yes it correspond with the prediction, as I mention above in 13 the higher value is the one picket by the prediction. 
+
+15. Predict the entire dataset using the object “model”. Save it in a variable called “pred”.
+
+```{r}
+model <- naiveBayes(HouseVotes84[ , c(2:17)], HouseVotes84$Class)
+pred <- predict(model, HouseVotes84[,c(2:17)])
+length(pred)
+```
+
+16. Create a table that counts the number of observations correctly and incorrectly identified as
+democrat and republican. (You can use the table( ) command)
+
+**Small example for understanding: (only first 10 rows)**
+
+a. How many are correctly labeled as democrat? 4
+b. How many are correctly labeled as republican? 4
+c. How many democrat observations were incorrectly labeled? 2
+
+```{r}
+table(prediction,class_labels[1:10])
+#                   Democrat(real) republican(real)
+#Democrat(predict)     TP               FP
+#Republican(predit)    FP               TN
+```
+
+
+
+**Running in all the data**
+a. How many are correctly labeled as democrat? 238
+b. How many are correctly labeled as republican? 155
+c. How many democrat observations were incorrectly labeled? 29
+
+
+```{r}
+table(pred,class_labels)
+#                   Democrat(real) republican(real)
+#Democrat(predict)     TP               FP
+#Republican(predit)    FP               TN
+```
+
+17. Repeat questions 15 and 16. Using laplace smothing What changed?
+
+When I increment the laplace value, I got better results in the TN, but I decrease the TP. It seems like using laplace =1 is the default value or at least it gave me the same answeer. 
+
+```{r}
+model <- naiveBayes(HouseVotes84[ , c(2:17)], HouseVotes84$Class, laplace = 9)
+pred_laplace <- predict(model, HouseVotes84[,c(2:17)])
+table(pred_laplace,class_labels)
+```
+
+
+```{r}
+model <- naiveBayes(HouseVotes84[ , c(2:17)], HouseVotes84$Class, laplace = 3)
+pred_laplace <- predict(model, HouseVotes84[,c(2:17)])
+table(pred_laplace,class_labels)
+```
+
+```{r}
+model <- naiveBayes(HouseVotes84[ , c(2:17)], HouseVotes84$Class, laplace = 1)
+pred_laplace <- predict(model, HouseVotes84[,c(2:17)])
+table(pred_laplace,class_labels)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+
+
+
+
+
+
+
+
