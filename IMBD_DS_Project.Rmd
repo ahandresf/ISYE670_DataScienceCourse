@@ -1,0 +1,336 @@
+---
+title: "IMBD Data Science Project"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** December 10th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**
+
+
+```{r}
+rm(list=ls()) 
+```
+```{r}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE, rows.print=3)
+```
+```{r}
+#Libraries
+library(ggplot2)
+library(data.table) #For extended data frames 
+library(dplyr)
+```
+#Data Description and preparation
+
+##Data Exploration
+```{r}
+#loading data
+ds_raw <- read.csv2("IMBD_movie_metadata.csv",sep = ",",header = TRUE)
+```
+```{r}
+#Data Exploration
+str(ds_raw)
+```
+```{r}
+#Data Exploration
+names(ds_raw)
+```
+
+###Description of attributes
+
+Variable Name            | Description
+---------------------|----------------------------------------------
+movie_title              | Title of the Movie
+duration                 | Duration in minutes
+director_name            | Name of the Director of the Movie
+director_facebook_likes  | Number of likes of the Director on his Facebook Page
+actor_1_name             | Primary actor starring in the movie
+actor_1_facebook_likes   | Number of likes of the Actor_1 on his/her Facebook Page
+actor_2_name             | Other actor starring in the movie
+actor_2_facebook_likes   | Number of likes of the Actor_2 on his/her Facebook Page
+actor_3_name             | Other actor starring in the movie
+actor_3_facebook_likes   | Number of likes of the Actor_3 on his/her Facebook Page
+num_user_for_reviews     | Number of users who gave a review
+num_critic_for_reviews   | Number of critical reviews on imdb
+num_voted_users          | Number of people who voted for the movie
+cast_total_facebook_likes| Total number of facebook likes of the entire cast of the movie
+movie_facebook_likes     | Number of Facebook likes in the movie page
+plot_keywords            | Keywords describing the movie plot
+facenumber_in_poster     | Number of the actor who featured in the movie poster
+color                    | Film colorization. ‘Black and White’ or ‘Color’
+genres                   | Film categorization like ‘Animation’, ‘Comedy’, ‘Romance’, ‘Horror’, ‘Sci-Fi’, ‘Action’, ‘Family’
+title_year               | The year in which the movie is released (1916:2016)
+language                 | English, Arabic, Chinese, French, German, Danish, Italian, Japanese etc
+country                  | Country where the movie is produced
+content_rating           | Content rating of the movie
+aspect_ratio             | Aspect ratio the movie was made in
+movie_imdb_link          | IMDB link of the movie
+gross                    | Gross earnings of the movie in Dollars
+budget                   | Budget of the movie in Dollars
+imdb_score               | IMDB Score of the movie on IMDB
+
+##Data Description
+The dataset contain the 5043 observations of movie's metadata, with 28 different attributes such as color, duration of the movie, principal actor name, number of votes per user, and likes.
+###Data types
+<!--What data types are there?
+What kinds of attributes are there? Categorical, numerical, character, Boolean,
+continuous, etc?  -->
+The dataset contain only factors that represent categorical values, integer, and numeric values. 
+```{r}
+#Table for know what kind of variable is define for each attribute in the data frame
+sapply(ds_raw, class)
+```
+<!--If character, then are they also categorical or can they be unique values?-->
+Character values for this dataset are always as factor, therefore, they are always categorical.
+###Statistical trends
+<!--If numeric, then what are the trends (mean, median,variance, etc)?-->
+The summary of the raw dataset is presented below, this helps to understand generalities of each attribute. 
+```{r}
+#Summary of the raw data
+summary(ds_raw)
+```
+
+###Definition of the target variable
+The target value is the the IMBD Score that correspond to the column 26. For convinience, the target variable was moved to the end of the dataframe. 
+```{r}
+match("imdb_score",names(ds_raw))
+ds_raw <- ds_raw[ , c(1:25,27,28,26)] #moving the target variable as the last column in the dataset 
+```
+```{r}
+names(ds_raw)[28]
+```
+
+##Elimination of duplicate observations
+There are 45 observations that are duplicated. They may be eliminated from the dataset, the target value will be moved to the end. 
+```{r}
+sum(duplicated(ds_raw))
+ds_clean <- ds_raw[!duplicated(ds_raw), ]
+```
+```{r}
+names(ds_clean)
+```
+This results in a new dataset of 4998 observations with 28 variables.
+
+#Feature Selection
+
+##Cardinality
+  <!--What is the cardinality? Use tables and graphs to help describe information-->
+  should be other type like numerical or character, the cardinality is too high
+  director_name            | Factor w/ 2399 
+  movie_imdb_link          | Factor w/ 4919 | This variable probably dont give me much info. 
+  plot_keywords            | Factor w/ 4761
+  actor_1_name             | Factor w/ 2098
+  actor_2_name             | Factor w/ 3033 
+  actor_3_name             | Factor w/ 3522
+  #looks strange, like too many factor for what I expected. 
+  genres                   | Factor w/ 914 |This one does not make much sense.
+This results in a new dataset of 4998 observations with 28 variables.
+From the cardinality evaluated before, it can be observed that some features may need some data cleanning.
+
+###Genres Feature
+The variable genres may not have that many factors. After analizing the data, the amount of factors is because the field contains more than one "type of genres" separated by the character pipe "|". In reality the cardinality of this variable should be 25. 
+
+####Fixing cardinality of Genres
+
+In order to fix the cardinality a new data frame can be created, it contains each genre class as a column. The value of the column is one if the class appeared, and zero if the class does not. The R code below implement the soluction. 
+```{r}
+#Code for fixing the cardinality of the genre to 25
+# create a new data frame
+genre_df <- as.data.frame(ds_clean[,c("genres", "imdb_score")])
+# separate different genres into new columns
+genre_df$Action <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Action") 1 else 0)
+genre_df$Adventure <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Adventure") 1 else 0)
+genre_df$Animation <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Animation") 1 else 0)
+genre_df$Biography <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Biography") 1 else 0)
+genre_df$Comedy <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Comedy") 1 else 0)
+genre_df$Crime <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Crime") 1 else 0)
+genre_df$Documentary <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Documentary") 1 else 0)
+genre_df$Drama <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Drama") 1 else 0)
+genre_df$Family <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Family") 1 else 0)
+genre_df$Fantasy <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Fantasy") 1 else 0)
+genre_df$`Film-Noir` <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Film-Noir") 1 else 0)
+genre_df$History <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "History") 1 else 0)
+genre_df$Horror <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Horror") 1 else 0)
+genre_df$Musical <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Musical") 1 else 0)
+genre_df$Mystery <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Mystery") 1 else 0)
+genre_df$News <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "News") 1 else 0)
+genre_df$Romance <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Romance") 1 else 0)
+genre_df$`Sci-Fi` <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Sci-Fi") 1 else 0)
+genre_df$Short <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Short") 1 else 0)
+genre_df$Sport <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Sport") 1 else 0)
+genre_df$Thriller <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Thriller") 1 else 0)
+genre_df$War <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "War") 1 else 0)
+genre_df$Western <- sapply(1:length(genre_df$genres), function(x) if (genre_df[x,1] %like% "Western") 1 else 0)
+```
+
+**Removing the first column of the data frame of genre**
+```{r}
+genre_df<-subset(genre_df, select = -c(genres)) #The info is in the other columns, first one is not need it. 
+```
+```{r}
+print(genre_df[1:5,]) 
+```
+```{r}
+sum(is.na(genre_df)) #checking if there are NA Values
+```
+```{r}
+# get the mean of imdb score for different genres
+means <- rep(0,23) #This create a vector 
+for (i in 1:23) {
+  means[i] <- mean(as.numeric(genre_df$imdb_score[genre_df[i+1]==1])) #getting the mean of score for i genre
+}
+```
+```{r}
+barplot(means, main = "Average IMBD scores for different genres", xlab = "Class of Genre", ylab = "Score in IMBD")#plot of means
+```
+```{r}
+print("Let's check the statistical values")
+summary(as.numeric(ds_clean$imdb_score),na.rm=TRUE)
+var(as.numeric(ds_clean$imdb_score),na.rm=TRUE)
+print("Let's see how is the same statistical analisys but for the means")
+summary(as.numeric(means),na.rm=TRUE)
+var(as.numeric(means),na.rm=TRUE)
+```
+With this plot can be said that the score is pretty similar beside the genres. 
+`**Removing Genres**
+```{r}
+#ds_clean<-subset(ds_clean, select = -c(genres)) #think about this, is this correct? 
+```
+**Movie Titles Removal**
+The number of titles  out of 4998 observationsthat repeat in the data setset are:
+```{r}
+#out of 4998
+sum(duplicated(ds_clean$movie_title))
+```
+Because few movie titles are repetead, it will be "almost" unique per each observation and therefore I do consider, it would not be a good feature to infered the IMBD score.  
+**Removing movie_title**
+```{r}
+###REMOVING
+ds_clean<-subset(ds_clean, select = -c(movie_title)) #Remove movie title as a feature
+```
+```{r}
+names(ds_clean) #checking movie title was removed 
+```
+
+##Missing values in my data set
+The dataset contains missing values, the table below summarize the missing values per feature. Because some of this values are going to be use during the classification is important to handle them. The option are either remove the observation or performe a data imputation. Also, if a feature contains several missing values it may be better to remove the feature completely, for this case any of the feature have that problem. 
+```{r}
+print(colSums(sapply(ds_clean, is.na)))
+```
+Gross and budget are the feature with more missing values, in percentage 17 percent per gross income and 1% per budget. 
+```{r}
+print((colSums(sapply(ds_clean, is.na)))/nrow(ds_clean))
+```
+
+###Data imputation function
+As imputation method, the non available number will be replaced by the average. 
+```{r}
+Imputaction_function <- function(data_frame_input)
+{
+  for (i in (1:ncol(data_frame_input)))
+    {
+    if (sum(is.na(data_frame_input[,i]))!=0)
+        {
+          data_frame_input[(is.na(data_frame_input[,i])),i]=mean(!is.na(data_frame_input[,i]))
+        }
+  }
+  return(data_frame_input)
+}
+```
+
+###Observation elimination for high quantity of missing values
+```{r}
+#optional uncoment if you decide to eliminate
+#ds_clean <- ds_clean[!is.na(ds_clean$gross), ]
+#ds_clean <- ds_clean[!is.na(ds_clean$budget), ]
+```
+
+
+```{r}
+#Using the function of data imputation
+#print(colSums(sapply(ds_clean, is.na))) #For testing
+ds_clean <- Imputaction_function(ds_clean) #calling data imputation by average
+```
+
+```{r}
+print(colSums(sapply(ds_clean, is.na)))
+```
+
+##Correlation between variables related with facebook
+Before performing this analisys my expectation was that all the variables related with facebook likes would be related directly with each other, however, the analisys below shows that this is not true except for actor 2 with casting and actor 3 with casting. But even in those cases the maximum correlation was 62%. With this I consider I can not eliminate this variables. 
+```{r}
+cor(ds_clean$director_facebook_likes,ds_clean$movie_facebook_likes)
+cor(ds_clean$actor_1_facebook_likes,ds_clean$movie_facebook_likes)
+cor(ds_clean$actor_2_facebook_likes,ds_clean$movie_facebook_likes)
+cor(ds_clean$actor_3_facebook_likes,ds_clean$movie_facebook_likes)
+cor(ds_clean$cast_total_facebook_likes,ds_clean$movie_facebook_likes)
+
+cor(ds_clean$director_facebook_likes,ds_clean$actor_1_facebook_likes)
+cor(ds_clean$director_facebook_likes,ds_clean$actor_2_facebook_likes)
+cor(ds_clean$director_facebook_likes,ds_clean$actor_3_facebook_likes)
+cor(ds_clean$director_facebook_likes,ds_clean$cast_total_facebook_likes)
+
+cor(ds_clean$actor_1_facebook_likes,ds_clean$actor_1_facebook_likes)
+cor(ds_clean$actor_1_facebook_likes,ds_clean$actor_2_facebook_likes)
+cor(ds_clean$actor_1_facebook_likes,ds_clean$actor_3_facebook_likes)
+cor(ds_clean$actor_1_facebook_likes,ds_clean$cast_total_facebook_likes)
+
+cor(ds_clean$actor_2_facebook_likes,ds_clean$actor_1_facebook_likes)
+cor(ds_clean$actor_2_facebook_likes,ds_clean$actor_3_facebook_likes)
+cor(ds_clean$actor_2_facebook_likes,ds_clean$cast_total_facebook_likes)
+
+cor(ds_clean$actor_3_facebook_likes,ds_clean$cast_total_facebook_likes)
+```
+```{r}
+cor(ds_clean$director_facebook_likes,as.numeric(ds_clean$imdb_score))
+cor(ds_clean$actor_1_facebook_likes,as.numeric(ds_clean$imdb_score))
+cor(ds_clean$actor_2_facebook_likes,as.numeric(ds_clean$imdb_score))
+cor(ds_clean$actor_3_facebook_likes,as.numeric(ds_clean$imdb_score))
+cor(ds_clean$cast_total_facebook_likes,as.numeric(ds_clean$imdb_score))
+```
+```{r}
+ds_clean[]
+```
+
+
+
+```{r}
+names(ds_clean)
+```
+
+
+#Feature Selection
+<!--
+As part of the analysis, determine which features/attributes should be included and
+which can be removed. Some variables have intuitive reasons for why they should
+be included or removed. Others require appropriate justification
+  The feature selection will depends on the final use of the dataset. For example, if once may want to evaluate the movie to get the imbd score, maybe some features do not affect significantly the imbd score. However, some user may be interested on sorting the data by that specific feature. In this work, I may assume that the only matter is predicting the imbd score.
+  -->
+
+#Clasification Algorithms
+<!--
+Apply at least 2 classification algorithms.**
+▪ Discuss how you cleaned up the data
+▪ Explain what data was ultimately used for each algorithm and what you had to do to prepare the data for proper use in each algorithm
+-->
+
+#Your conclusions
+<!--must contain a comparison of the algorithms, the advantages and disadvantages of each, and the reason why one algorithm may have performed the best-->
+
+#Chech you have all this sections
+<!--
+Introduction (5)
+Data Description and Preparation (15)
+Modeling Approach (15)
+Analysis/Results (10)
+Conclusions/Next Steps (5)
+-->
+

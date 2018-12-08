@@ -1,0 +1,318 @@
+---
+title: "ICA 12 k-means clusters"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** November 19th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**
+
+```{r}
+rm(list=ls()) 
+```
+
+```{r}
+library("ggplot2")
+data("iris")
+```
+
+
+```{r}
+str(iris)
+names(iris)
+summary(iris)
+```
+There are 150 observations, 3 classes and 4 features. 
+
+**Arguments of the kmeans method**
+
+Arguments
+x
+numeric matrix of data, or an object that can be coerced to such a matrix (such as a numeric vector or a data frame with all numeric columns).  
+
+centers: either the number of clusters, say k , or a set of initial (distinct) cluster centres. If a number, a random set of (distinct) rows in x is chosen as the initial centres.
+
+iter.max
+the maximum number of iterations allowed.
+
+nstart
+if centers is a number, how many random sets should be chosen?
+
+algorithm
+character: may be abbreviated. Note that "Lloyd" and "Forgy" are alternative names for one algorithm.
+
+object
+an R object of class "kmeans", typically the result ob of ob <- kmeans(..).
+
+method
+character: may be abbreviated. "centers" causes fitted to return cluster centers (one for each input point) and "classes" causes fitted to return a vector of class assignments.
+
+trace
+logical or integer number, currently only used in the default method ("Hartigan-Wong"): if positive (or true), tracing information on the progress of the algorithm is produced. Higher values may produce more tracing information.
+
+
+**Output of the algorithm**
+
+Value
+kmeans returns an object of class "kmeans" which has a print and a fitted method. It is a list with at least the following components:
+
+cluster
+A vector of integers (from 1:k) indicating the cluster to which each point is allocated.
+
+centers
+A matrix of cluster centres.
+
+totss
+The total sum of squares.
+
+withinss
+Vector of within-cluster sum of squares, one component per cluster.
+
+tot.withinss
+Total within-cluster sum of squares, i.e.sum(withinss).
+
+betweenss
+The between-cluster sum of squares, i.e.totss-tot.withinss.
+
+size
+The number of points in each cluster.
+
+iter
+The number of (outer) iterations.
+
+ifault
+integer: indicator of a possible algorithm problem -- for experts.
+
+```{r}
+set.seed(1234)
+input_ds<-iris[c("Sepal.Length","Sepal.Width","Petal.Length","Petal.Width")]
+```
+
+```{r}
+iris_km2=kmeans(x=input_ds,centers = 2,nstart = 10)
+#iris_km2=kmeans(input_ds,2,10)
+
+```
+```{r}
+#str(iris_km2)
+#summary(iris_km2)
+#iris_km2$cluster
+```
+
+
+```{r}
+ggplot(iris, aes(y=Petal.Length, x=Petal.Width)) + geom_point(size = 2, aes(color = Species))+ggtitle("Iris - Grouped by Species")
+ggplot(iris, aes(y=Petal.Length, x=Petal.Width)) + geom_point(size = 2,aes(color = iris_km2$cluster))+ggtitle("Iris - kmeans with 2 clusters")
+```
+
+
+8. Kmeans group the cluster in two levels 1 and 2. As can be observed above the setosa group is correctly agregated in the category one but couple of other observation where included in one group, al the other samples get agregated in the same group. 
+
+**A numerical look at the results**
+
+```{r}
+iris_km2
+```
+
+9.a) The percentage for (between_ss/total_ss) is 77.6%  
+
+9.b) The are 97 observation in the cluster 2 and 53 observations in teh cluster 1. 
+```{r}
+sum(iris_km2$cluster==2)
+sum(iris_km2$cluster==1)
+```
+10. a) Three observation of versicolor were agregated on 3 and 47 are classifying on group 2. 
+```{r}
+table(iris$Species, iris_km2$cluster)
+```
+10. b) In cluster 1 there are 53 observation while 97 observation are in cluster 2. 
+
+**Now with K=3 **
+11 and 12) As can be observed below the classification is closer to the real one. 
+
+```{r}
+ggplot(iris, aes(y=Petal.Length, x=Petal.Width)) + geom_point(size = 2, aes(color = Species))+ggtitle("Iris - Grouped by Species")
+```
+
+
+```{r}
+iris_km3=kmeans(x=input_ds,centers = 3,nstart = 10)
+ggplot(iris, aes(y=Petal.Length, x=Petal.Width)) + geom_point(size = 2,aes(color = iris_km3$cluster))+ggtitle("Iris - kmeans with 3 clusters")
+```
+
+13) a) Now the percentage is bigger 88.4% 
+
+```{r}
+iris_km3
+```
+
+b) 
+```{r}
+sum(iris_km3$cluster==1) 
+sum(iris_km3$cluster==2)
+sum(iris_km3$cluster==3)
+#sum(iris$Species=="setosa") 
+#sum(iris$Species=="versicolor")
+#sum(iris$Species=="virginica")
+
+```
+
+14) As can be observed in the table below and in the graphic above 50 observastions in the first group were correctly classify, the second group agregate 38 observations missing 12, and the third group agregatte 62 observation when in reality it should agregate only 50. From the table it can be observed that the error was lower in the species versicolor than in the virginica. 
+
+```{r}
+table(iris$Species, iris_km3$cluster)
+```
+
+15) Adding the numbers in the diagolan we can said that 66 samples were correctly classify while in the other attempt only 50 were classify because the others were all aggregated in the same group. Eventhough in this attempt to classify ths group you got more errors than using k=2 it does make sense because those two groups are the ones which samples are closer. So from the probability of error k=2 is better but from the probability of classification k=3 is better. 
+
+
+
+**Part 2**
+
+```{r}
+rm(list=ls()) 
+```
+
+
+```{r}
+wine<-read.csv("wine.data",header = FALSE)
+colnames(wine) <- c('Type', 'Alcohol', 'Malic', 'Ash',
+'Alcalinity', 'Magnesium', 'Phenols',
+'Flavanoids', 'Nonflavanoids',
+'Proanthocyanins', 'Color', 'Hue',
+'Dilution', 'Proline')
+wine$Type <- as.factor(wine$Type)
+```
+
+```{r}
+str(wine)
+```
+
+```{r}
+scale_var<-scale(wine[-1])
+library(NbClust)
+```
+
+```{r}
+#wine[-1] #it revome the type column
+```
+
+```{r}
+#wine
+```
+
+
+
+19. Read in NbClust using the “library” command. We want to use the command “NbClust”.
+Answer the following questions using the Help.
+a. What does the parameter “min.nc” and “max.nc” mean?
+b. What format must the input data be in?
+c. What is the “index” parameter? ** Very important
+d. What are the different methods of clustering that can be used with the “NbClust”
+command?
+e. What is the default distance measure?
+f. What happens when “distance” is set to NULL?
+g. What do the output of the function “NbClust” mean? (Hint: they are All.index,
+All.CriticalValues, Best.nc and Best.partition)
+
+
+20. Use the “NbClust” command with the following parameters: (i) Let the data be the scaled
+wine data, (ii) the min number of clusters is 2, (iii) the max num of clusters is 15, and (iv)
+the method should be “kmeans”
+** Remember to save the output into a new variable.
+a. Interpret the output into the console. You may need to reference the Help.
+b. What does the output recommend as the best number of clusters?
+
+
+```{r}
+data_matrix_wine<-data.matrix(wine)
+num_Clust<-NbClust(data=scale_var, diss = NULL, distance = "euclidean", method = "kmeans", index = "all", min.nc = 2, max.nc = 15)
+```
+
+According to the index I choose three is the number of cluster that we may use. 
+
+
+21) The command below shows the best number of cluster depending on the index. 
+
+```{r}
+num_Clust$Best.nc[1,]
+```
+
+22) The following command tell you how many algorithms agree on the number of cluster need it to split correctly the dataset. This direct to teh same conclution of 20a because k=3 is the number of clusters most voted.
+
+```{r}
+table(num_Clust$Best.nc[1,])
+```
+
+22)
+
+```{r}
+barplot( table(num_Clust$Best.nc[1,]), xlab="number of clusters", ylab = "number of criteria",
+main="Number of clusters chosen by 26 Criteria")
+```
+
+23) From the previous analisys, I would select k=3 clusters for my algorithm. 
+
+**Perform k-means clustering**
+
+24) Run the “kmeans” command with centers = answer from the previous question, and the
+scaled wine data. Save it into a variable named km_fit
+
+```{r}
+km_fit=kmeans(x=scale_var,centers = 3,nstart = 30)
+```
+
+  a. How big is each cluster? As can be observed below the clusters are 51, 65, 62 elements each one. 
+  
+```{r}
+km_fit
+```
+  
+  b. What is the within cluster sum of squares (wss) of each cluster?
+     *326.3537
+     *558.6971
+     *385.6983
+     
+  c. What is the location of each center?
+The centers are located at the value represented by the vector called clusters means. 
+  
+  d. The centers are in standardized values. To get the center location with respect to the original data, you can use the aggregate function. What are the centers with respect to the original values? 
+  
+```{r}
+aggregate(wine[-1], by=list(cluster=km_fit$cluster), mean)
+
+```
+
+
+
+25. Try the analysis again for k +1 and k-1. See how the results change by performing the
+analysis laid out in Exercise 1. 
+
+```{r}
+km_fit_4=kmeans(x=scale_var,centers = 4,nstart = 30)
+km_fit_2=kmeans(x=scale_var,centers = 4,nstart = 30)
+```
+
+```{r}
+aggregate(wine[-1], by=list(cluster=km_fit_4$cluster), mean)
+```
+
+```{r}
+aggregate(wine[-1], by=list(cluster=km_fit_2$cluster), mean)
+```
+```{r}
+km_fit_2
+```
+
+```{r}
+km_fit_4
+```
+
+

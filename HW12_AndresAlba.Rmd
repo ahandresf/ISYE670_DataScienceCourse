@@ -1,0 +1,128 @@
+---
+title: "Homework 12 k-means clusters"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** November 25th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University**
+
+
+**POINT A**  
+
+```{r}
+rm(list=ls()) 
+```
+
+```{r}
+ds=read.csv2("Wholesale_customers_data.csv",sep=",",header = TRUE)
+```
+
+```{r}
+str(ds)
+#ds
+```
+```{r}
+n_ds=ds[,c(3:8)]
+str(n_ds) #creating new data set
+```
+
+```{r}
+set.seed(250) #Creating the seed for whatever random task in the code
+```
+
+**POINT B**  
+The data was from the website:  
+i. (2 points) What country does the information come from?  
+The information is from Portugal.  
+ii. (2 points) Look at the attribute information. What do the attributes “Fresh” and
+“Region” mean?  
+
+*Fresh: annual spending (m.u.) on fresh products.  
+*Region: customers Region region.  Lisbon, Oporto or Other Region.  
+
+
+**POINT C**  
+
+Perform the k-means clustering using the “kmeans” command. Do not use the NbClust
+command. Let k = 3 and answer the following questions.  
+
+```{r}
+#Scaling the data
+s_ds<-scale(n_ds)
+```
+
+
+```{r}
+#perform the clustering
+ds_fit=kmeans(x=s_ds,centers = 3,nstart = 40)
+```
+
+```{r}
+ds_fit
+```
+
+i. (3 points) How many data points are in each cluster?   
+After performing the clustering 8 points belong to the first cluster, 345 points belong to the second cluster, and 87 points belong to the third cluster.  
+
+ii. (2 points) What cluster is observation 80 in?  
+The observation 80 belongs to the cluster 2.  
+
+```{r}
+ds_fit$cluster[80]
+```
+
+iii. (3 points) What are the centers of the clusters?  
+
+The centers are the vectors 1,2,3 describe below.  
+```{r}
+ds_fit$centers
+```
+
+iv. (8 points) Compare the results of your kmeans algorithm results with the Region column of the original data. What is the composition of each cluster with respect to the Region type.  
+
+```{r}
+sum(ds$Region==1)
+sum(ds$Region==2)
+sum(ds$Region==3)
+```
+
+```{r}
+table(ds_fit$cluster,ds$Region)
+```
+
+The rows of the table above reference to the cluster while the columns reference the Region. For example, the cluster one have 0 elements of region 1, two elements of region 2 and 7 elements of region 3.  
+
+**POINT D**  
+
+(10 points) Perform the k-means clustering using the “kmeans” command. Do not use the NbClust command. Perform the algorithm for k values 1 through 10. Using within sum of squares, between sum of squares and total sum of squares, determine which value of k you would recommend. Explain why.  
+
+
+```{r}
+for (i in 1:10)
+{
+  test<-kmeans(x=s_ds,centers = i,nstart = 40)
+  print(i)
+  #print(test$withinss)
+  print(test$tot.withinss) #Total Within cluster sum of squares. WSS
+  print(test$betweenss) #Between sum of squares
+  print(test$totss) #Total sum of squares
+  print("----------------------")
+}
+```
+
+The data for each k was printed above. Small WSS indicates more compact and dense clusters so better ones for classification. Use Within Sum of Squares: measures the variability of the observations within a clusterThe lowest value was obtained for k=10. Because the total sum squares is the same then the between-cluster sum of squares have the highest value for k = 10  
+
+
+
+
+
+
+

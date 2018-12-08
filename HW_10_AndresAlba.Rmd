@@ -1,0 +1,152 @@
+---
+title: "ICA 10 Naive Bayes Classifier"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+always_allow_html: yes
+---
+**Author:** Andres Felipe Alba Hernández  
+**Department:** Electrical Engineering  
+**Date:** November 10th, 2018  
+**Course:** ISYE670 Data Science for Engineers  
+**Professor:** Dr. Christine Nguyen  
+**Northern Illinois University** 
+
+```{r}
+rm(list=ls()) #cleaning environment variables|
+```
+
+
+```{r}
+#Libraries and packages
+library(e1071)
+source("ID3 Algorithm.R")
+```
+
+```{r}
+#Loading data
+car_table <- read.csv("car.data")
+nombres <- c("buying", "maint","doors","persons","lug_boot","safety","class")
+names(car_table)<-nombres
+str(car_table)
+```
+
+```{r}
+set.seed(150)
+#Spliting the data set
+randNumbers <- sample(nrow(car_table) , floor(0.75*nrow(car_table)), replace = FALSE)
+TrainingSet <- car_table[ randNumbers, ]
+ValidationSet <- car_table[-randNumbers,]
+```
+
+**ID3 Algorithm**
+```{r}
+tree <- Node$new("CAR") #initial node, placeholder for the tree
+TrainID3(tree,TrainingSet) #uses the tree created before 
+#print(tree, "feature")
+```
+
+**Build the Naïve Bayes classifier**
+```{r}
+#Default model
+#model <- naiveBayes(descritive_features_data , class_labels)
+model <- naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class)
+model_laplace<-naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class, laplace = 1)
+```
+
+**a) Prediction and Accuracy of the Bayes Classifier without laplace**
+
+```{r}
+pred_bayes_validation <- predict(model, ValidationSet[,c(1:6)])
+pred_bayes_training <- predict(model, TrainingSet[(1:6)])
+```
+
+```{r}
+accuracy_validation<-table(pred_bayes_validation,ValidationSet$class)
+accuracy_training<-table(pred_bayes_training,TrainingSet$class)
+print(accuracy_training)
+print("Percentage accuracy:")
+(accuracy_training[1,1]+accuracy_training[2,2]+accuracy_training[3,3]+accuracy_training[4,4])/sum(accuracy_training)
+print(accuracy_validation)
+print("Percentage accuracy:")
+(accuracy_validation[1,1]+accuracy_validation[2,2]+accuracy_validation[3,3]+accuracy_validation[4,4])/sum(accuracy_training)
+```
+
+**b) Prediction and Accuracy of the Bayes Classifier with laplace**
+
+```{r}
+pred_bayes_validation_laplace <- predict(model_laplace, ValidationSet[,c(1:6)])
+pred_bayes_training_laplace <- predict(model_laplace, TrainingSet[(1:6)])
+```
+
+
+**c) Analisys of performance by clases.**
+
+i)The elements in the diagonal of the table correspond to the number of observation that were classify correctly in the data set. I did the analisys for both the validation dataset and the training dataset. As can be observed from the performance in the training dataset is much better than the one in the validation. From this results, I consider that the model did not perform well in the new data and it is not a good model. 
+
+ii) For the validation dataset, 9 observations were classify as acc when they were good, 13 as acc when they were unacc and 7 that in reality were vgood. Therefore a total 29 observations clasify as acc when they belong to another category (validation dataset)
+
+iii) The class unacc was the one that have a better accuracy as can be observed in the table. 
+
+
+
+```{r}
+accuracy_validation<-table(pred_bayes_validation_laplace,ValidationSet$class)
+accuracy_training<-table(pred_bayes_training_laplace,TrainingSet$class)
+print(accuracy_training)
+print("Percentage accuracy:")
+(accuracy_training[1,1]+accuracy_training[2,2]+accuracy_training[3,3]+accuracy_training[4,4])/sum(accuracy_training)
+print(accuracy_validation)
+print("Percentage accuracy:")
+(accuracy_validation[1,1]+accuracy_validation[2,2]+accuracy_validation[3,3]+accuracy_validation[4,4])/sum(accuracy_training)
+```
+
+**d) Prediction with the ID3 algorithm**
+
+```{r}
+#Handling error with exception and counting the number of errors
+correct=0
+incorrect=0
+counter=0
+non_classify=0
+non_classify_index=array()
+for(i in 1:nrow(ValidationSet)) 
+{
+  #print(i)
+  counter=counter+1
+  tryCatch({
+            i_pre=Predict(tree,ValidationSet[i,1:6])
+            if(i_pre==ValidationSet[i,7]){
+              correct=correct+1}
+            else{
+              incorrect=incorrect+1}
+            }, 
+  error=function(e){
+          print(i)
+          non_classify=non_classify+1
+          non_classify_index[non_classify]=i
+          })
+}
+print("------------------")
+PD=correct/nrow(ValidationSet)
+Pmiss=incorrect/nrow(ValidationSet)
+#Pnon_decide=non_classify/nrow(ValidationSet)
+#Non_possibleClass=length(non_classify_index
+print("----------------")
+#print(nrow(ValidationSet))
+#print(correct)
+#print(incorrect)
+print(PD)
+print(Pmiss)
+print(non_classify)
+print(counter)
+```
+
+The Algorithm shows an efficient a probability of correct classification of 93%, with and incorrect classification of 5% and another 2% that the algorithm was not able to classify while using 80% of the data for training. The total error probability will correspond to a 7% and depending on the application this error can be appropiate or not, however, considering that 75% of the total data was used for training I think the performance is not as goos as I expected because the algorithm was not able to generalized. 
+
+
+**Comparing both algorithms**
+
+After observing both results, ID3 give a better performance. Somehow I was expecting that the bayesian approach would be better but it only gave 20% accuracy in the validation dataset which is pretty low. One advantage of Naive Bayesian is that it does classify the data while ID3 can sometimes shows an error when it can not reach a branch in certain classification. 
