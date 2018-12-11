@@ -26,8 +26,9 @@ library(data.table) #For extended data frames
 library(dplyr)
 library(FNN) #Packeage for KNN
 #Libraries and packages
-library(e1071)
+library(e1071)#for IDE 3
 source("ID3 Algorithm.R")
+library(caret) #for confusion matrix
 ```
 ```{r}
 set.seed(250) #setting a seed for the random stuff. 
@@ -471,26 +472,7 @@ for (i in 1:ncol(Km_TraSet))
   Km_TraSet[,i]<-as.numeric(Km_TraSet[,i])
   }
 ```
-```{r}
-print("Training and Validation Data for KNN")
-KNN_TraSet <- TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score","movie_quality")]
-KNN_TraLab <- TrainingSet[,colnames(TrainingSet) %in% c("movie_quality")]
-KNN_ValSet <- ValidationSet[,! colnames(ValidationSet) %in% c("imdb_score","movie_quality")]
-KNN_ValLab <- ValidationSet[,colnames(TrainingSet) %in% c("movie_quality")]
-print("Converting everything to numeric KNN Training")
- for (i in 1:ncol(KNN_TraSet))
-  {
-   KNN_TraSet[,i]<-as.numeric(KNN_TraSet[,i])
-   KNN_ValSet[,i]<-as.numeric(KNN_ValSet[,i])
-  }
-#sapply(KNN_TraSet,class)
-#KNN_TraSet <- scale(KNN_TraSet)
-#KNN_ValSet <- scale(KNN_ValSet)
-sum(is.na(KNN_TraLab)) #checking for missing values
-sum(is.na(KNN_TraLab)) #checking for missing values
-sum(is.na(KNN_TraLab)) #checking for missing values
-sum(is.na(KNN_TraLab)) #checking for missing values
-```
+
 ```{r}
 names(TrainingSet)
 ```
@@ -514,8 +496,6 @@ ID3_Training$movie_quality <- as.numeric(ID3_Training$movie_quality)
 ```{r}
 #str(TrainingSet)
 ```
-
-
 #Clasification Algorithms
 <!--
 Apply at least 2 classification algorithms.**
@@ -523,23 +503,144 @@ Apply at least 2 classification algorithms.**
 ▪ Explain what data was ultimately used for each algorithm and what you had to do to prepare the data for proper use in each algorithm
 -->
 #KNN Algorithm
+##KNN DataSets Preparation
 ```{r}
-#prediction using the model
-predictions_KNN <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 20, prob = FALSE)
-class(predictions_KNN)
-class(KNN_ValLab)
+print("Training and Validation Data for KNN with buckets")
+KNN_TraSet <- TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score","movie_quality")]
+KNN_TraLab <- TrainingSet[,colnames(TrainingSet) %in% c("movie_quality")]
+KNN_ValSet <- ValidationSet[,! colnames(ValidationSet) %in% c("imdb_score","movie_quality")]
+KNN_ValLab <- ValidationSet[,colnames(TrainingSet) %in% c("movie_quality")]
+print("Converting everything to numeric KNN Training")
+ for (i in 1:ncol(KNN_TraSet))
+  {
+   KNN_TraSet[,i]<-as.numeric(KNN_TraSet[,i])
+   KNN_ValSet[,i]<-as.numeric(KNN_ValSet[,i])
+  }
+#sapply(KNN_TraSet,class)
+#KNN_TraSet <- scale(KNN_TraSet)
+#KNN_ValSet <- scale(KNN_ValSet)
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
 ```
 ```{r}
-table(predictions_KNN,KNN_ValLab)
+#prediction using the model for different K 
+predictions_KNN_10 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 10, prob = FALSE)
+res_KNN_10<-table(predictions_KNN_10,KNN_ValLab) #table predicted vs real
+predictions_KNN_50 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 50, prob = FALSE)
+res_KNN_50<-table(predictions_KNN_50,KNN_ValLab) #table predicted vs real
+predictions_KNN_100 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 100, prob = FALSE)
+res_KNN_100<-table(predictions_KNN_100,KNN_ValLab) #table predicted vs real
+predictions_KNN_1000 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 1000, prob = FALSE)
+res_KNN_1000<-table(predictions_KNN_1000,KNN_ValLab) #table predicted vs real
+#class(predictions_KNN)
+#class(KNN_ValLab)
+```
+```{r}
+res_KNN_10
+(res_KNN_10[1,1]+res_KNN_10[2,2]+res_KNN_10[3,3]+res_KNN_10[4,4])/length(KNN_ValLab)
+res_KNN_50
+(res_KNN_50[1,2]+res_KNN_10[2,3]+res_KNN_10[3,4])/length(KNN_ValLab)
+res_KNN_100
+(res_KNN_100[1,2]+res_KNN_100[2,3])/length(KNN_ValLab)
+res_KNN_1000
+(res_KNN_10[1,3])/length(KNN_ValLab)
 ```
 
 ```{r}
-accuracy_prediction <-sum(predictions_KNN == KNN_ValLab)/length(KNN_ValLab)
-print(accuracy_prediction)
+#Calculation of the best k
+acc_old=0
+k_best=0
+for (i in 1:1000) #iterating from k=1 to K=1000
+  {
+    predictions_i <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = i, prob = FALSE)
+    acc_new=sum(as.character(predictions_i)==as.character(KNN_ValLab))/length(KNN_ValLab) #calculation of accuracy
+    if (acc_new>acc_old) #Checking if the accuracy is better than the best accuracy before
+    {
+      k_best=i #update value
+      acc_old=acc_new #update value
+    }
+}
+print("The best results")
+print(k_best)
+print(acc_old)
+```
+After 1000 iterations the best result was K=154 with an accuracy of 0.5276596. 
+
+```{r}
+#str(predictions_KNN_10)
+#str(KNN_ValLab)
+#length(predictions_KNN_10)
+#length(KNN_ValLab)
+#levels(predictions_KNN_10)
+#levels(KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)$overall[1]
+#confusionMatrix(predictions_KNN_50,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
 ```
 
 
+##Using KNN but instead of buckets using the imbd_score itself
+```{r}
+print("Training and Validation Data for KNN")
+KNN_TraLab <- TrainingSet[,colnames(TrainingSet) %in% c("imdb_score")]
+KNN_ValLab <- ValidationSet[,colnames(TrainingSet) %in% c("imdb_score")]
+print("Converting everything to numeric KNN Training")
+```
+```{r}
+#prediction using the model for different K 
+predictions_KNN_10 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 10, prob = FALSE)
+predictions_KNN_50 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 50, prob = FALSE)
+predictions_KNN_100 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 100, prob = FALSE)
+predictions_KNN_1000 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 1000, prob = FALSE)
+#class(predictions_KNN)
+#class(KNN_ValLab)
+```
+```{r}
+#Checking how many levels are generated depending on the number of k neiborghs 
+nlevels(predictions_KNN_10)
+nlevels(predictions_KNN_50)
+nlevels(predictions_KNN_100)
+nlevels(predictions_KNN_1000)
+nlevels(as.factor(KNN_ValLab))
+#length(predictions_KNN_10)
+#length(KNN_ValLab)
+```
+```{r}
+acc=sum(predictions_KNN_50==KNN_ValLab)/length(KNN_ValLab)
+print(acc)
+```
+```{r}
+#Calculation of the best k
+acc_old=0
+k_best=0
+for (i in 1:1000) #iterating from k=1 to K=1000
+  {
+    predictions_i <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = i, prob = FALSE)
+    acc_new=sum(as.character(predictions_i)==as.character(KNN_ValLab))/length(KNN_ValLab) #calculation of accuracy
+    if (acc_new>acc_old) #Checking if the accuracy is better than the best accuracy before
+    {
+      k_best=i #update value
+      acc_old=acc_new #update value
+    }
+}
+print("The best results")
+print(k_best)
+print(acc_old)
+```
 
+```{r}
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(predictions_KNN_50,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(as.character(res_KNN_10),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_50),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_100),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_1000),as.character(KNN_ValLab))
+```
 #ID3 Algorithm 
 ```{r}
 #names(TrainingSet)
