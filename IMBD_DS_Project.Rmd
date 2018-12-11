@@ -9,25 +9,30 @@ always_allow_html: yes
 ---
 **Author:** Andres Felipe Alba Hernández  
 **Department:** Electrical Engineering  
-**Date:** December 10th, 2018  
+**Date:** December 10th,2018  
 **Course:** ISYE670 Data Science for Engineers  
 **Professor:** Dr. Christine Nguyen  
 **Northern Illinois University**
-
 
 ```{r}
 rm(list=ls()) 
 ```
 ```{r}
 library(knitr)
-knitr::opts_chunk$set(echo = TRUE, rows.print=3)
-```
-```{r}
+#knitr::opts_chunk$set(echo = TRUE, rows.print=3)
 #Libraries
 library(ggplot2)
 library(data.table) #For extended data frames 
 library(dplyr)
+library(FNN) #Packeage for KNN
+#Libraries and packages
+library(e1071)
+source("ID3 Algorithm.R")
 ```
+```{r}
+set.seed(250) #setting a seed for the random stuff. 
+```
+
 #Data Description and preparation
 
 ##Data Exploration
@@ -43,7 +48,6 @@ str(ds_raw)
 #Data Exploration
 names(ds_raw)
 ```
-
 ###Description of attributes
 
 Variable Name            | Description
@@ -79,6 +83,7 @@ imdb_score               | IMDB Score of the movie on IMDB
 
 ##Data Description
 The dataset contain the 5043 observations of movie's metadata, with 28 different attributes such as color, duration of the movie, principal actor name, number of votes per user, and likes.
+
 ###Data types
 <!--What data types are there?
 What kinds of attributes are there? Categorical, numerical, character, Boolean,
@@ -90,6 +95,7 @@ sapply(ds_raw, class)
 ```
 <!--If character, then are they also categorical or can they be unique values?-->
 Character values for this dataset are always as factor, therefore, they are always categorical.
+
 ###Statistical trends
 <!--If numeric, then what are the trends (mean, median,variance, etc)?-->
 The summary of the raw dataset is presented below, this helps to understand generalities of each attribute. 
@@ -139,7 +145,6 @@ From the cardinality evaluated before, it can be observed that some features may
 The variable genres may not have that many factors. After analizing the data, the amount of factors is because the field contains more than one "type of genres" separated by the character pipe "|". In reality the cardinality of this variable should be 25. 
 
 ####Fixing cardinality of Genres
-
 In order to fix the cardinality a new data frame can be created, it contains each genre class as a column. The value of the column is one if the class appeared, and zero if the class does not. The R code below implement the soluction. 
 ```{r}
 #Code for fixing the cardinality of the genre to 25
@@ -252,20 +257,17 @@ Imputaction_function <- function(data_frame_input)
 #ds_clean <- ds_clean[!is.na(ds_clean$gross), ]
 #ds_clean <- ds_clean[!is.na(ds_clean$budget), ]
 ```
-
-
 ```{r}
 #Using the function of data imputation
 #print(colSums(sapply(ds_clean, is.na))) #For testing
 ds_clean <- Imputaction_function(ds_clean) #calling data imputation by average
 ```
-
 ```{r}
 print(colSums(sapply(ds_clean, is.na)))
 ```
 
 ##Correlation between variables related with facebook
-Before performing this analisys my expectation was that all the variables related with facebook likes would be related directly with each other, however, the analisys below shows that this is not true except for actor 2 with casting and actor 3 with casting. But even in those cases the maximum correlation was 62%. With this I consider I can not eliminate this variables. 
+Before performing this analisys my expectation was that all the variables related with facebook likes would be related directly with each other, however, the analisys below shows that this is not completely true. There is only some correlation between actor 2 with casting and actor 3 with casting. But even in those cases the maximum correlation was 62%. With this I consider I can not eliminate this variables. 
 ```{r}
 cor(ds_clean$director_facebook_likes,ds_clean$movie_facebook_likes)
 cor(ds_clean$actor_1_facebook_likes,ds_clean$movie_facebook_likes)
@@ -296,14 +298,59 @@ cor(ds_clean$actor_2_facebook_likes,as.numeric(ds_clean$imdb_score))
 cor(ds_clean$actor_3_facebook_likes,as.numeric(ds_clean$imdb_score))
 cor(ds_clean$cast_total_facebook_likes,as.numeric(ds_clean$imdb_score))
 ```
+
+##Content Rating and missing values. 
+The dataset have some ratings that are out of classifcation. Furthermore, there are 301 observations with missing values, those observations may be removed because is hard to imagine a data imputation here. 
 ```{r}
-ds_clean[]
+sum((ds_clean$content_rating==""))
+ds_clean <- ds_clean[!(ds_clean$content_rating==""),]
+sum((ds_clean$content_rating==""))
+```
+Below the current description of content rating. 
+<!--Table of classifcation-->
+G|General Audiences|All ages admitted. Nothing that would offend parents for viewing by children.
+PG|Parental Guidance Suggested|Some material may not be suitable for children. Parents urged to give "parental guidance". May contain some material parents might not like for their young children.
+PG-13|Parents Strongly Cautioned|Some material may be inappropriate for children under 13. Parents are urged to be cautious. Some material may be inappropriate for pre-teenagers.
+R|Restricted|Under 17 requires accompanying parent or adult guardian. Contains some adult material. Parents are urged to learn more about the film before taking their young children with them.
+NC-17|Adults Only|No One 17 and Under Admitted. Clearly adult. Children are not admitted.
+.
+```{r}
+table(ds_clean$content_rating)
+#table(ds_clean$genres)
+```
+As can be observed, there are some categories in the dataset that do not appeared in the classification. Those belong to older classifications that are not used anymore but equivalences can be done. Then M=GP=PG, X=NC-17, replace X with NC-17, because these are what we use nowadays. The old classification is shown below. 
+Rated G: Suggested for General Audiences
+Rated M: Suggested for Mature Audiences – parental discretion advised
+Rated R: Restricted – persons under 16 not admitted, unless accompanied by parent or adult guardian.
+Rated X: Persons Under 16 Not Admitted
+```{r}
+ds_clean$content_rating[ds_clean$content_rating == 'M']   <- 'PG' 
+ds_clean$content_rating[ds_clean$content_rating == 'GP']  <- 'PG' 
+ds_clean$content_rating[ds_clean$content_rating == 'X']   <- 'NC-17'
+```
+```{r}
+table(ds_clean$content_rating)
+```
+Other classifications does not give much information, one option is to replace those one for the most common classification that is R.
+```{r}
+#IMDB$content_rating[ds_clean$content_rating == 'Approved']  <- 'R' 
+#IMDB$content_rating[IMDB$content_rating == 'Not Rated'] <- 'R' 
+#IMDB$content_rating[IMDB$content_rating == 'Passed']    <- 'R' 
+#IMDB$content_rating[IMDB$content_rating == 'Unrated']   <- 'R' 
+#IMDB$content_rating <- factor(IMDB$content_rating)
+#table(IMDB$content_rating)
 ```
 
-
-
+##Language
+Most of the observations contain English as the language. This attribute is a good candidate to be removed in the future. But for first analisys, it will be keep it.  
 ```{r}
-names(ds_clean)
+table(ds_clean$language)
+```
+
+##IMBD LINK
+The imdb link does not provide any information about the movie and it may not affect the final score. Therefore this columnt should be removed. 
+```{r}
+ds_clean<-subset(ds_clean, select = -c(movie_imdb_link)) #think about this, is this correct? 
 ```
 
 
@@ -311,9 +358,163 @@ names(ds_clean)
 <!--
 As part of the analysis, determine which features/attributes should be included and
 which can be removed. Some variables have intuitive reasons for why they should
-be included or removed. Others require appropriate justification
+be included or removed. Others require appropriate justification  -->
   The feature selection will depends on the final use of the dataset. For example, if once may want to evaluate the movie to get the imbd score, maybe some features do not affect significantly the imbd score. However, some user may be interested on sorting the data by that specific feature. In this work, I may assume that the only matter is predicting the imbd score.
-  -->
+##Names of actors
+I consider the name of an actor in a movie can be a good mesuarement of how good a movie is, however, after checking the data is observed there is almost non repetition, therefore, this variable is not going to contribute much in the score and I decided to omit it for the classification. 
+```{r}
+nlevels(ds_clean$actor_1_name)
+nlevels(ds_clean$actor_2_name)
+nlevels(ds_clean$actor_3_name)
+ds_clean<-subset(ds_clean,select = -c(actor_1_name,actor_2_name,actor_3_name))
+```
+
+##Country
+Around 79% movies are from USA, 8% from UK, and 13% from other countries. Therefore it make sense to agregate them in the following way. 
+```{r}
+levels(ds_clean$country) <- c(levels(ds_clean$country), "Others")
+ds_clean$country[(ds_clean$country != 'USA')&(ds_clean$country != 'UK')] <- 'Others' 
+ds_clean$country <- factor(ds_clean$country)
+table(ds_clean$country)
+```
+
+##Facenumber in Poster
+After analyzing the histograms for facenumber if can be observed that most of them have only one face in the poster and just few of them have several faces in them. 
+```{r}
+#str(ds_clean$facenumber_in_poster)
+hist(ds_clean$facenumber_in_poster, main="Histogram of # faces in the poster", xlab = "Bin of facenumber")
+#hist(ds_clean$facenumber_in_po)
+hist(ds_clean$facenumber_in_poster[ds_clean$facenumber_in_poster<=10],main = "Histogram less than 10 faces in the poster", xlab = "Bin of facenumber")
+hist(ds_clean$facenumber_in_poster[ds_clean$facenumber_in_poster>10],main = "Histogram more than 10 faces in the poster", xlab = "Bin of facenumber")
+#ds_clean<-subset(ds_clean,select = -c(facenumber_in_poster))
+
+```
+
+
+```{r}
+names(ds_clean)
+```
+#Variable eliminitation
+```{r}
+ds_clean<-subset(ds_clean,select = -c(facenumber_in_poster))
+
+```
+#Spliting the imbd score in classes.
+After having some problems of convergence, I consider properly to reduce the number of possible levels in the target value. Instead of having 78 possible outputs in the score, I decided to have only four classes or clusters. One new column is added, movie_quality. Four intervals are going to be used 0-4,4-6,6-8,8-10 that may be interpreted as bad, regular, good, excelent. 
+```{r}
+#sapply(ds_clean,class)
+nlevels(ds_clean$imdb_score)
+```
+#Exploring the target variable
+```{r}
+#Exploring the target variable
+#str(ds_clean$movie_quality)
+#str(round(as.numeric(ds_clean$imdb_score)))
+summary(as.numeric(ds_clean$imdb_score))
+hist(round(as.numeric(ds_clean$imdb_score)),main = "Histogram IMBD scores", xlab = "IMBD Score")
+```
+
+```{r}
+#Manual Normalization of target value
+sum(is.na(ds_clean$imdb_score))
+max_score<-max(as.numeric(ds_clean$imdb_score))
+min_score<-min(as.numeric(ds_clean$imdb_score))
+ds_clean$imdb_score<-10*(as.numeric(ds_clean$imdb_score)-min_score)/(max_score-min_score)
+hist(round(as.numeric(ds_clean$imdb_score)),main = "Histogram IMBD scores", xlab = "IMBD Score")
+summary(ds_clean$imdb_score)
+```
+
+```{r}
+#Quantizing the target variable in four intervals
+sum(is.na(ds_clean$imdb_score))
+ds_clean$movie_quality <- cut(as.numeric(ds_clean$imdb_score), breaks = c(-0.1,4,6,8,10))#breaking in four bins, I have to use -0.1 because the left limit is not included.
+levels(ds_clean$movie_quality)
+#summary(ds_clean$movie_quality)
+#ds_clean[is.na(ds_clean$movie_quality),]
+#(as.numeric(ds_clean$movie_quality))
+```
+```{r}
+#ds_clean$movie_quality[ds_clean$movie_quality_buckets=="(-0.1,4]"]<-"bad"
+#ds_clean$movie_quality[ds_clean$movie_quality_buckets=="(4,6]"]<-"regular"
+#ds_clean$movie_quality[ds_clean$movie_quality_buckets=="(6,8]"]<-"good"
+#ds_clean$movie_quality[ds_clean$movie_quality_buckets=="(8,10]"]<-"excelent"
+```
+
+
+```{r}
+#table(ds_clean$movie_quality)
+#levels(ds_clean$movie_quality)
+#hist(as.numeric(ds_clean$movie_quality), main = "Histogram of movie quality in a zero to 10 score")
+```
+
+
+#Creating training and validation data sets
+```{r}
+#DataSet for Training
+#ds_training<-ds_clean[,! colnames(ds_clean) %in% c("imdb_score")]
+#sapply(ds_clean, class)
+```
+```{r}
+print("Training and Validation Data 75%-25%")
+randNumbers <- sample(nrow(ds_clean) , floor(0.75*nrow(ds_clean)), replace = FALSE)
+TrainingSet <- ds_clean[ randNumbers, ]
+ValidationSet <- ds_clean[-randNumbers,]
+```
+```{r}
+print("Training Dataset for K_Means")
+Km_TraSet <- ds_clean[,! colnames(ds_clean) %in% c("imdb_score","movie_quality")]
+```
+```{r}
+print("Converting everything to numeric KMeans Training")
+for (i in 1:ncol(Km_TraSet))
+ {
+  Km_TraSet[,i]<-as.numeric(Km_TraSet[,i])
+  }
+```
+```{r}
+print("Training and Validation Data for KNN")
+KNN_TraSet <- TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score","movie_quality")]
+KNN_TraLab <- TrainingSet[,colnames(TrainingSet) %in% c("movie_quality")]
+KNN_ValSet <- ValidationSet[,! colnames(ValidationSet) %in% c("imdb_score","movie_quality")]
+KNN_ValLab <- ValidationSet[,colnames(TrainingSet) %in% c("movie_quality")]
+print("Converting everything to numeric KNN Training")
+ for (i in 1:ncol(KNN_TraSet))
+  {
+   KNN_TraSet[,i]<-as.numeric(KNN_TraSet[,i])
+   KNN_ValSet[,i]<-as.numeric(KNN_ValSet[,i])
+  }
+#sapply(KNN_TraSet,class)
+#KNN_TraSet <- scale(KNN_TraSet)
+#KNN_ValSet <- scale(KNN_ValSet)
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
+sum(is.na(KNN_TraLab)) #checking for missing values
+```
+```{r}
+names(TrainingSet)
+```
+
+
+
+```{r}
+print("Training for ID3 algorithm")
+#ds_clean<-subset(ds_clean,select = -c(actor_1_name,actor_2_name,actor_3_name))
+#ID3_Training<-TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")]
+ID3_Training<-subset(TrainingSet, select = -c(imdb_score))
+ID3_Training$movie_quality <- as.numeric(ID3_Training$movie_quality)
+#ID3_Training <- TrainingSet[,c(1:21,23)]
+#ID3_Validation <- ValidationSet[,c(1:21,23)]
+#names(ID3_Training)
+##sapply(TrainingSet,class)
+##print("------------------")
+##sapply(ID3_Training,class)
+
+```
+```{r}
+#str(TrainingSet)
+```
+
 
 #Clasification Algorithms
 <!--
@@ -321,6 +522,122 @@ Apply at least 2 classification algorithms.**
 ▪ Discuss how you cleaned up the data
 ▪ Explain what data was ultimately used for each algorithm and what you had to do to prepare the data for proper use in each algorithm
 -->
+#KNN Algorithm
+```{r}
+#prediction using the model
+predictions_KNN <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 20, prob = FALSE)
+class(predictions_KNN)
+class(KNN_ValLab)
+```
+```{r}
+table(predictions_KNN,KNN_ValLab)
+```
+
+```{r}
+accuracy_prediction <-sum(predictions_KNN == KNN_ValLab)/length(KNN_ValLab)
+print(accuracy_prediction)
+```
+
+
+
+#ID3 Algorithm 
+```{r}
+#names(TrainingSet)
+#print("-----------------")
+#names(TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")])
+```
+##ID3 Algorithm
+
+```{r}
+#TrainingSet
+#TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")]
+```
+```{r}
+#ID3_Training
+```
+
+
+```{r}
+print("Doing the ID3 Training")
+tree_ID3 <- Node$new("Movie") #initial node, placeholder for the tree
+#TrainID3(tree_ID3,ID3_Training)
+TrainID3(tree_ID3,TrainingSet) #uses the tree created before 
+#TrainID3(tree_ID3,TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")]) #uses the tree created before 
+```
+```{r}
+print(tree_ID3, "feature")
+#plot(tree_ID3)
+```
+```{r}
+names(TrainingSet[,1:21])
+```
+
+```{r}
+correct=0
+incorrect=0
+counter=0
+non_classify=0
+non_classify_index=array()
+for(i in 1:nrow(TrainingSet))
+  {
+    pred_train_Tree <- Predict(tree_ID3,TrainingSet[i,1:22])
+    if(pred_train_Tree==TrainingSet[i,23])
+       {
+          correct=correct+1}
+    else{
+          incorrect=incorrect+1}
+}
+print("------------------")
+PD=correct/nrow(ValidationSet)
+Pmiss=incorrect/nrow(ValidationSet)
+print(PD)
+print(Pmiss)
+```
+##Build the Naïve Bayes classifier
+```{r}
+#Default model
+#model <- naiveBayes(descritive_features_data , class_labels)
+model <- naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class)
+model_laplace<-naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class, laplace = 1)
+```
+
+##Normalization K means
+```{r}
+Km_TraSet_norm<-sapply(Km_TraSet,function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)})
+summary(Km_TraSet_norm)
+```
+
+##KMeans
+<!--
+K-Means is a clustering algorithm, should I actually used for regretion?
+-->
+
+```{r}
+#sapply(ds_training, class)
+```
+
+```{r}
+print("Performing KMeans Training")
+#ds_clean[,! colnames(ds_clean) %in% c("imdb_score")]
+k=4
+#Kmeans_imbd<-kmeans(x=Km_TraSet,centers = k,nstart = 5) #perform KMeans clustering algorithm 
+Kmeans_imbd<-kmeans(x=Km_TraSet_norm,centers = k,nstart = 5) #perform KMeans clustering algorithm 
+```
+```{r}
+print("Showing results")
+res<-table(Kmeans_imbd$cluster,ds_clean$movie_quality)
+res
+(res[1,1]+res[2,2]+res[3,3]+res[4,4])/nrow(ds_clean)
+```
+
+Using five starts and four clusters the performance in the training dataset was only 43% of correct classification, every time the algorithm run it get a different performance but never above 43%. 
+```{r}
+print(Kmeans_imbd$tot.withinss) #Total Within cluster sum of squares. WSS
+print(Kmeans_imbd$betweenss) #Between sum of squares
+print(Kmeans_imbd$totss) #Total sum of squares
+```
+
+#Other Algorithm, maybe regression
 
 #Your conclusions
 <!--must contain a comparison of the algorithms, the advantages and disadvantages of each, and the reason why one algorithm may have performed the best-->
