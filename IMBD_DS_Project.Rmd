@@ -1,10 +1,10 @@
 ---
 title: "IMBD Data Science Project"
 output:
-  word_document: default
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
+  word_document: default
 always_allow_html: yes
 ---
 **Author:** Andres Felipe Alba Hernández  
@@ -524,6 +524,64 @@ sum(is.na(KNN_TraLab)) #checking for missing values
 sum(is.na(KNN_TraLab)) #checking for missing values
 sum(is.na(KNN_TraLab)) #checking for missing values
 ```
+
+##Using KNN using the imbd_score itself
+```{r}
+print("Training and Validation Data for KNN")
+KNN_TraLab_score <- TrainingSet[,colnames(TrainingSet) %in% c("imdb_score")]
+KNN_ValLab_score <- ValidationSet[,colnames(TrainingSet) %in% c("imdb_score")]
+print("Converting everything to numeric KNN Training")
+```
+```{r}
+#prediction using the model for different K 
+predictions_KNN_10 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab_score, k = 10, prob = FALSE)
+predictions_KNN_50 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab_score, k = 50, prob = FALSE)
+predictions_KNN_100 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab_score, k = 100, prob = FALSE)
+predictions_KNN_1000 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab_score, k = 1000, prob = FALSE)
+#Checking how many levels are generated depending on the number of k neiborghs 
+nlevels(predictions_KNN_10)
+nlevels(predictions_KNN_50)
+nlevels(predictions_KNN_100)
+nlevels(predictions_KNN_1000)
+nlevels(as.factor(KNN_ValLab))
+#length(predictions_KNN_10)
+#length(KNN_ValLab)
+```
+```{r}
+#Calculation of the best k
+acc_old=0
+k_best=0
+for (i in 1:50) #iterating from k=1 to K=1000
+  {
+    predictions_i <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = i, prob = FALSE)
+    acc_new=sum(as.character(predictions_i)==as.character(KNN_ValLab))/length(KNN_ValLab) #calculation of accuracy
+    if (acc_new>acc_old) #Checking if the accuracy is better than the best accuracy before
+    {
+      k_best=i #update value
+      acc_old=acc_new #update value
+    }
+}
+print("The best results")
+print(k_best)
+print(acc_old)
+```
+After 500 iteration the best result was found with k=1, with a really poor performance. So it does not see like a good algorithm if the goal is predicting the imdb_score without quantizing its value. In other words using the amount of factors that come by default. 
+[1] "The best results"
+[1] 1
+[1] 0.06382979
+
+```{r}
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(predictions_KNN_50,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(predictions_KNN_10,KNN_ValLab)
+#confusionMatrix(as.character(res_KNN_10),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_50),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_100),as.character(KNN_ValLab))
+#confusionMatrix(as.character(res_KNN_1000),as.character(KNN_ValLab))
+```
+
+##Using KNN with the target value in four bins. 
 ```{r}
 #prediction using the model for different K 
 predictions_KNN_10 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 10, prob = FALSE)
@@ -552,7 +610,7 @@ res_KNN_1000
 #Calculation of the best k
 acc_old=0
 k_best=0
-for (i in 1:1000) #iterating from k=1 to K=1000
+for (i in 1:155) #iterating from k=1 to K=1000 => reduce later for performance purposes
   {
     predictions_i <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = i, prob = FALSE)
     acc_new=sum(as.character(predictions_i)==as.character(KNN_ValLab))/length(KNN_ValLab) #calculation of accuracy
@@ -566,8 +624,10 @@ print("The best results")
 print(k_best)
 print(acc_old)
 ```
+[1] "The best results"
+[1] 154
+[1] 0.5276596
 After 1000 iterations the best result was K=154 with an accuracy of 0.5276596. 
-
 ```{r}
 #str(predictions_KNN_10)
 #str(KNN_ValLab)
@@ -579,127 +639,6 @@ After 1000 iterations the best result was K=154 with an accuracy of 0.5276596.
 #confusionMatrix(predictions_KNN_50,KNN_ValLab)
 #confusionMatrix(predictions_KNN_10,KNN_ValLab)
 #confusionMatrix(predictions_KNN_10,KNN_ValLab)
-```
-
-
-##Using KNN but instead of buckets using the imbd_score itself
-```{r}
-print("Training and Validation Data for KNN")
-KNN_TraLab <- TrainingSet[,colnames(TrainingSet) %in% c("imdb_score")]
-KNN_ValLab <- ValidationSet[,colnames(TrainingSet) %in% c("imdb_score")]
-print("Converting everything to numeric KNN Training")
-```
-```{r}
-#prediction using the model for different K 
-predictions_KNN_10 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 10, prob = FALSE)
-predictions_KNN_50 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 50, prob = FALSE)
-predictions_KNN_100 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 100, prob = FALSE)
-predictions_KNN_1000 <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = 1000, prob = FALSE)
-#class(predictions_KNN)
-#class(KNN_ValLab)
-```
-```{r}
-#Checking how many levels are generated depending on the number of k neiborghs 
-nlevels(predictions_KNN_10)
-nlevels(predictions_KNN_50)
-nlevels(predictions_KNN_100)
-nlevels(predictions_KNN_1000)
-nlevels(as.factor(KNN_ValLab))
-#length(predictions_KNN_10)
-#length(KNN_ValLab)
-```
-```{r}
-acc=sum(predictions_KNN_50==KNN_ValLab)/length(KNN_ValLab)
-print(acc)
-```
-```{r}
-#Calculation of the best k
-acc_old=0
-k_best=0
-for (i in 1:1000) #iterating from k=1 to K=1000
-  {
-    predictions_i <- knn(train=KNN_TraSet, test=KNN_ValSet, cl = KNN_TraLab, k = i, prob = FALSE)
-    acc_new=sum(as.character(predictions_i)==as.character(KNN_ValLab))/length(KNN_ValLab) #calculation of accuracy
-    if (acc_new>acc_old) #Checking if the accuracy is better than the best accuracy before
-    {
-      k_best=i #update value
-      acc_old=acc_new #update value
-    }
-}
-print("The best results")
-print(k_best)
-print(acc_old)
-```
-
-```{r}
-#confusionMatrix(predictions_KNN_10,KNN_ValLab)
-#confusionMatrix(predictions_KNN_50,KNN_ValLab)
-#confusionMatrix(predictions_KNN_10,KNN_ValLab)
-#confusionMatrix(predictions_KNN_10,KNN_ValLab)
-#confusionMatrix(as.character(res_KNN_10),as.character(KNN_ValLab))
-#confusionMatrix(as.character(res_KNN_50),as.character(KNN_ValLab))
-#confusionMatrix(as.character(res_KNN_100),as.character(KNN_ValLab))
-#confusionMatrix(as.character(res_KNN_1000),as.character(KNN_ValLab))
-```
-#ID3 Algorithm 
-```{r}
-#names(TrainingSet)
-#print("-----------------")
-#names(TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")])
-```
-##ID3 Algorithm
-
-```{r}
-#TrainingSet
-#TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")]
-```
-```{r}
-#ID3_Training
-```
-
-
-```{r}
-print("Doing the ID3 Training")
-tree_ID3 <- Node$new("Movie") #initial node, placeholder for the tree
-#TrainID3(tree_ID3,ID3_Training)
-TrainID3(tree_ID3,TrainingSet) #uses the tree created before 
-#TrainID3(tree_ID3,TrainingSet[,! colnames(TrainingSet) %in% c("imdb_score")]) #uses the tree created before 
-```
-```{r}
-print(tree_ID3, "feature")
-#plot(tree_ID3)
-```
-```{r}
-names(TrainingSet[,1:21])
-```
-
-```{r}
-correct=0
-incorrect=0
-counter=0
-non_classify=0
-non_classify_index=array()
-for(i in 1:nrow(TrainingSet))
-  {
-    pred_train_Tree <- Predict(tree_ID3,TrainingSet[i,1:22])
-    if(pred_train_Tree==TrainingSet[i,23])
-       {
-          correct=correct+1}
-    else{
-          incorrect=incorrect+1}
-}
-print("------------------")
-PD=correct/nrow(ValidationSet)
-Pmiss=incorrect/nrow(ValidationSet)
-print(PD)
-print(Pmiss)
-```
-##Build the Naïve Bayes classifier
-```{r}
-#Default model
-#model <- naiveBayes(descritive_features_data , class_labels)
-model <- naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class)
-model_laplace<-naiveBayes(TrainingSet[ ,c(1:6)], TrainingSet$class, laplace = 1)
 ```
 
 ##Normalization K means
